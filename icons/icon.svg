@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Voluntarios de Limpieza">
+  <rect width="512" height="512" rx="112" fill="#3B82F6"/>
+  <g fill="#fff" transform="translate(256 270) rotate(-28) translate(-256 -270)">
+    <rect x="236" y="86" width="40" height="168" rx="20"/>
+    <path d="M168 248h176c8 0 16 8 14 16l-28 148c-2 12-14 22-26 22H208c-12 0-24-10-26-22l-28-148c-2-8 6-16 14-16z"/>
+    <rect x="176" y="268" width="160" height="14" rx="7" fill="#3B82F6"/>
+  </g>
+  <path fill="#fff" d="M368 148l12-28 12 28 28 12-28 12-12 28-12-28-28-12z"/>
+  <path fill="#fff" d="M412 214l8-16 8 16 16 8-16 8-8 16-8-16-16-8z"/>
+</svg>

@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Organiza los turnos semanales de voluntarios de limpieza, capitanes y exporta la planilla.">
+  <meta name="theme-color" content="#3b82f6">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Voluntarios">
+  <meta name="application-name" content="Voluntarios">
+  <meta name="msapplication-TileColor" content="#3b82f6">
+  <meta name="msapplication-TileImage" content="icons/icon-192.png">
+  <title>Voluntarios de Limpieza</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <script src="vendor/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8/dist/umd/supabase.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/db.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #f5f7fb;
+      color: #1e293b;
+      padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .app-container {
+      max-width: 1400px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 32px;
+      box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.1);
+      padding: 32px 36px;
+      transition: all 0.2s;
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    h1 span {
+      background: #3b82f6;
+      color: white;
+      font-size: 1.2rem;
+      padding: 4px 14px;
+      border-radius: 40px;
+      font-weight: 500;
+    }
+    .subhead {
+      color: #64748b;
+      margin-bottom: 28px;
+      font-size: 1rem;
+      border-left: 4px solid #3b82f6;
+      padding-left: 16px;
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 12px;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 10px 20px;
+      border-radius: 40px;
+      cursor: pointer;
+      color: #64748b;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tab-btn i { font-style: normal; font-size: 1.2rem; }
+    .tab-btn:hover { background: #f1f5f9; color: #1e293b; }
+    .tab-btn.active {
+      background: #3b82f6;
+      color: white;
+      box-shadow: 0 8px 16px -4px rgba(59, 130, 246, 0.3);
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Estilos generales */
+    .card {
+      background: #ffffff;
+      border: 1px solid #e9eef3;
+      border-radius: 24px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+    .card-title {
+      font-weight: 600;
+      font-size: 1.2rem;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #0f172a;
+    }
+    .btn {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 10px 20px;
+      border-radius: 40px;
+      border: none;
+      background: #3b82f6;
+      color: white;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s;
+      box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+    }
+    .btn:hover { background: #2563eb; transform: translateY(-1px); }
+    .btn-outline {
+      background: white;
+      border: 1.5px solid #cbd5e1;
+      color: #334155;
+      box-shadow: none;
+    }
+    .btn-outline:hover { background: #f8fafc; border-color: #94a3b8; }
+    .btn-danger {
+      background: #ef4444;
+      box-shadow: 0 4px 8px rgba(239, 68, 68, 0.2);
+    }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+    .btn-icon { padding: 8px 12px; border-radius: 40px; }
+
+    /* Tabla voluntarios */
+    .table-wrapper { overflow-x: auto; border-radius: 16px; border: 1px solid #e9eef3; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th {
+      text-align: left;
+      padding: 14px 16px;
+      background: #f8fafc;
+      font-weight: 600;
+      color: #475569;
+      border-bottom: 1px solid #e2e8f0;
+      white-space: nowrap;
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #edf2f7;
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    .day-check {
+      display: flex;
+      gap: 6px;
+    }
+    .day-check label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: #f1f5f9;
+      padding: 4px 10px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.1s;
+      color: #334155;
+    }
+    .day-check input[type="checkbox"] { display: none; }
+    .day-check input[type="checkbox"]:checked + span {
+      background: #3b82f6;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 30px;
+      margin: -4px -10px;
+    }
+    .day-check label:has(input:checked) {
+      background: #3b82f6;
+      color: white;
+    }
+    .captain-badge {
+      display: inline-block;
+      background: #f59e0b;
+      color: #1e1e1e;
+      font-weight: 700;
+      font-size: 0.7rem;
+      padding: 2px 10px;
+      border-radius: 30px;
+      margin-left: 8px;
+      letter-spacing: 0.3px;
+    }
+    .captain-days {
+      font-size: 0.75rem;
+      color: #b45309;
+      font-weight: 500;
+      background: #fef3c7;
+      padding: 2px 8px;
+      border-radius: 20px;
+      display: inline-block;
+    }
+    .badge-config {
+      background: #e2e8f0;
+      color: #1e293b;
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    /* Config por día */
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .config-item {
+      background: #f8fafc;
+      border-radius: 16px;
+      padding: 16px 12px;
+      text-align: center;
+      border: 1px solid #e2e8f0;
+    }
+    .config-item label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      margin-bottom: 8px;
+    }
+    .config-item input {
+      width: 70px;
+      padding: 10px;
+      border-radius: 40px;
+      border: 1.5px solid #cbd5e1;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      text-align: center;
+      font-size: 1rem;
+      background: white;
+    }
+    .config-item input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+
+    /* Planilla generada */
+    .planilla-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 16px;
+    }
+    .periodo-badge {
+      background: #3b82f6;
+      color: white;
+      padding: 8px 20px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .planilla-dias {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .dia-card {
+      background: #f8fafc;
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+    }
+    .dia-card .dia-header {
+      background: #eef2f6;
+      padding: 12px 16px;
+      font-weight: 700;
+      font-size: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #d1d9e6;
+    }
+    .dia-card .dia-body {
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .voluntario-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      padding: 4px 0;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+    .voluntario-item:last-child { border-bottom: none; }
+    .capitan-tag {
+      background: #f59e0b;
+      color: #1e1e1e;
+      font-weight: 700;
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 30px;
+    }
+
+    /* Historial */
+    .historial-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #edf2f7;
+    }
+    .historial-item:last-child { border-bottom: none; }
+    .historial-fecha {
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .historial-acciones button {
+      margin-left: 8px;
+    }
+
+    /* Modal simple */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+    .modal-box {
+      background: white;
+      border-radius: 28px;
+      padding: 28px 32px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 30px 60px -12px rgba(0,0,0,0.3);
+    }
+    .modal-box h3 {
+      font-size: 1.4rem;
+      margin-bottom: 16px;
+    }
+    .modal-box p { color: #475569; margin-bottom: 20px; }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .flex { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .mt-4 { margin-top: 16px; }
+    .mb-2 { margin-bottom: 8px; }
+    .text-muted { color: #64748b; font-size: 0.85rem; }
+    .empty-state { padding: 40px; text-align: center; color: #94a3b8; font-size: 0.95rem; }
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .title-row h1 { margin-bottom: 0; }
+    .sync-pill {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 30px;
+      background: #e2e8f0;
+      color: #334155;
+      white-space: nowrap;
+      align-self: center;
+    }
+    .sync-pill.ok { background: #dcfce7; color: #166534; }
+    .sync-pill.warn { background: #fef3c7; color: #92400e; }
+    .sync-pill.err { background: #fee2e2; color: #991b1b; }
+    .setup-steps { color: #475569; font-size: 0.9rem; margin-bottom: 16px; line-height: 1.55; }
+    .setup-steps ol { padding-left: 18px; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    .field label { font-size: 0.8rem; font-weight: 600; color: #475569; }
+    .field input {
+      padding: 10px 14px;
+      border-radius: 16px;
+      border: 1.5px solid #cbd5e1;
+      font-family: inherit;
+      font-size: 0.9rem;
+      background: white;
+    }
+    .field input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(245, 247, 251, 0.72);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 900;
+      font-weight: 600;
+      color: #334155;
+    }
+    .loading-overlay[hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <div class="title-row">
+    <h1>🧹 Voluntarios de Limpieza <span>PWA</span></h1>
+    <div id="syncStatus" class="sync-pill">Local</div>
+  </div>
+  <div class="subhead">Organiza los turnos semanales, capitanes y exporta la planilla. Los datos se guardan en Supabase.</div>
+
+  <div id="supabaseSetup" class="card" hidden>
+    <div class="card-title">Conectar Supabase</div>
+    <div class="setup-steps">
+      <ol>
+        <li>Crea un proyecto en <a href="https://supabase.com" target="_blank" rel="noopener">supabase.com</a>.</li>
+        <li>Abre <strong>SQL Editor</strong>, pega el contenido de <code>sql/schema.sql</code> y pulsa Run.</li>
+        <li>En <strong>Project Settings → API</strong> copia la Project URL y la clave <code>anon public</code>.</li>
+        <li>Pégalas aquí (quedan en este dispositivo) o en <code>js/supabase-config.js</code> antes de publicar.</li>
+      </ol>
+    </div>
+    <div class="field">
+      <label for="supabaseUrlInput">Project URL</label>
+      <input id="supabaseUrlInput" type="url" placeholder="https://xxxx.supabase.co" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="supabaseKeyInput">anon public key</label>
+      <input id="supabaseKeyInput" type="password" placeholder="eyJ..." autocomplete="off">
+    </div>
+    <div class="flex">
+      <button type="button" class="btn" id="supabaseConnectBtn">Conectar</button>
+      <button type="button" class="btn btn-outline" id="supabaseLocalBtn">Seguir solo en este dispositivo</button>
+    </div>
+    <p id="supabaseSetupError" class="text-muted mt-4" style="color:#dc2626;" hidden></p>
+  </div>
+  <div id="appLoading" class="loading-overlay" hidden>Cargando datos…</div>
+
+  <!-- Pestañas -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="voluntarios"><i>👥</i> Voluntarios</button>
+    <button class="tab-btn" data-tab="config"><i>⚙️</i> Configuración</button>
+    <button class="tab-btn" data-tab="planilla"><i>📅</i> Planilla semanal</button>
+    <button class="tab-btn" data-tab="historial"><i>🗂️</i> Historial</button>
+  </div>
+
+  <!-- Contenido: Voluntarios -->
+  <div id="tab-voluntarios" class="tab-content active">
+    <div class="card">
+      <div class="card-title">
+        Lista de voluntarios
+        <button class="btn btn-sm" id="addVoluntarioBtn">+ Añadir voluntario</button>
+      </div>
+      <div class="table-wrapper">
+        <table id="voluntariosTable">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Disponibilidad (M-S)</th>
+              <th>⚓ Capitán</th>
+              <th>Días como capitán</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="voluntariosBody"></tbody>
+        </table>
+      </div>
+      <div id="voluntariosEmpty" class="empty-state" style="display:none;">No hay voluntarios. Añade el primero.</div>
+    </div>
+  </div>
+
+  <!-- Contenido: Configuración -->
+  <div id="tab-config" class="tab-content">
+    <div class="card">
+      <div class="card-title">👥 Voluntarios necesarios por día</div>
+      <p class="text-muted mb-2">Configura cuántas personas se necesitan cada día (de martes a sábado).</p>
+      <div class="config-grid" id="configDiasGrid">
+        <!-- Generado por JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenido: Planilla semanal -->
+  <div id="tab-planilla" class="tab-content">
+    <div class="card">
+      <div class="card-title">
+        Generar planilla
+        <button class="btn btn-outline btn-sm" id="nuevaSemanaBtn">+ Nueva semana</button>
+      </div>
+      <div class="flex">
+        <div>
+          <label class="text-muted" style="font-size:0.8rem; font-weight:600;">Semana seleccionada</label>
+          <select id="semanaSelect" style="padding:10px 16px; border-radius:40px; border:1.5px solid #cbd5e1; font-family:Inter; font-weight:500; background:white; min-width:240px;">
+            <option value="">— Selecciona una semana —</option>
+          </select>
+        </div>
+        <button class="btn" id="generarPlanillaBtn" style="margin-top:20px;">🔄 Generar planilla</button>
+        <button class="btn btn-outline" id="exportarJpgBtn" style="margin-top:20px;">⬇️ Exportar JPG</button>
+      </div>
+    </div>
+    <div class="card" id="planillaContainer">
+      <div id="planillaContent">
+        <div class="empty-state">Selecciona o crea una semana para generar la planilla.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenido: Historial -->
+  <div id="tab-historial" class="tab-content">
+    <div class="card">
+      <div class="card-title">📋 Semanas anteriores</div>
+      <div id="historialList">
+        <div class="empty-state">No hay planillas guardadas.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  //  DATOS Y PERSISTENCIA (Supabase + caché local)
+  // ============================================================
+  const DIAS = ['Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const DIAS_ABREV = { Martes: 'Mar', Miércoles: 'Mié', Jueves: 'Jue', Viernes: 'Vie', Sábado: 'Sáb' };
+
+  let voluntarios = [];
+  let configDias = { Martes: 3, Miércoles: 3, Jueves: 3, Viernes: 3, Sábado: 3 };
+  let planillasGuardadas = [];
+  let usarSoloLocal = sessionStorage.getItem('limpieza_solo_local') === '1';
+
+  function setSyncStatus(mode, detail) {
+    const el = document.getElementById('syncStatus');
+    if (!el) return;
+    el.classList.remove('ok', 'warn', 'err');
+    if (mode === 'ok') {
+      el.textContent = 'Supabase';
+      el.classList.add('ok');
+    } else if (mode === 'offline') {
+      el.textContent = 'Sin conexión (caché)';
+      el.classList.add('warn');
+    } else if (mode === 'error') {
+      el.textContent = detail ? `Error: ${detail}` : 'Error de sync';
+      el.classList.add('err');
+    } else {
+      el.textContent = 'Este dispositivo';
+      el.classList.add('warn');
+    }
+  }
+
+  function setLoading(visible) {
+    const el = document.getElementById('appLoading');
+    if (el) el.hidden = !visible;
+  }
+
+  function showSetup(visible, errorMessage) {
+    const box = document.getElementById('supabaseSetup');
+    const err = document.getElementById('supabaseSetupError');
+    if (!box) return;
+    box.hidden = !visible;
+    if (err) {
+      err.hidden = !errorMessage;
+      err.textContent = errorMessage || '';
+    }
+    const creds = window.VoluntariosDB.getCredentials();
+    const urlInput = document.getElementById('supabaseUrlInput');
+    const keyInput = document.getElementById('supabaseKeyInput');
+    if (visible && urlInput && !urlInput.value) urlInput.value = creds.url.startsWith('https://') && !creds.url.includes('TU-PROYECTO') ? creds.url : '';
+    if (visible && keyInput && !keyInput.value && creds.key && !creds.key.includes('TU-ANON-KEY')) keyInput.value = creds.key;
+  }
+
+  async function guardarVoluntarios() {
+    try {
+      voluntarios = await window.VoluntariosDB.saveVoluntarios(voluntarios);
+      window.voluntarios = voluntarios;
+    } catch (error) {
+      setSyncStatus('error', error.message);
+      alert('No se pudo guardar en Supabase: ' + error.message);
+    }
+  }
+
+  async function guardarConfig() {
+    try {
+      await window.VoluntariosDB.saveConfig(configDias);
+    } catch (error) {
+      setSyncStatus('error', error.message);
+      alert('No se pudo guardar la configuración: ' + error.message);
+    }
+  }
+
+  async function guardarPlanillas() {
+    try {
+      planillasGuardadas = await window.VoluntariosDB.savePlanillas(planillasGuardadas);
+      window.planillasGuardadas = planillasGuardadas;
+    } catch (error) {
+      setSyncStatus('error', error.message);
+      alert('No se pudo guardar la planilla: ' + error.message);
+    }
+  }
+
+  function pintarDatos() {
+    renderVoluntarios();
+    renderConfigDias();
+    renderSemanaSelect();
+    renderHistorial();
+  }
+
+  async function iniciarDatos() {
+    setLoading(true);
+    try {
+      if (!usarSoloLocal) {
+        await window.VoluntariosDB.init();
+      }
+      const data = await window.VoluntariosDB.loadAll();
+      voluntarios = data.voluntarios;
+      configDias = data.configDias;
+      planillasGuardadas = data.planillas;
+      window.voluntarios = voluntarios;
+      window.configDias = configDias;
+      window.planillasGuardadas = planillasGuardadas;
+      if (window.VoluntariosDB.usingCloud) {
+        setSyncStatus('ok');
+        showSetup(false);
+      } else if (usarSoloLocal) {
+        setSyncStatus('local');
+        showSetup(false);
+      } else {
+        setSyncStatus('local');
+        showSetup(true);
+      }
+      pintarDatos();
+    } catch (error) {
+      const cache = window.VoluntariosDB.readCache();
+      voluntarios = cache.voluntarios;
+      configDias = cache.configDias;
+      planillasGuardadas = cache.planillas;
+      window.voluntarios = voluntarios;
+      window.configDias = configDias;
+      window.planillasGuardadas = planillasGuardadas;
+      pintarDatos();
+      if (!navigator.onLine) {
+        setSyncStatus('offline');
+      } else {
+        setSyncStatus('error', error.message);
+        showSetup(true, error.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ============================================================
+  //  INICIALIZACIÓN
+  // ============================================================
+  document.addEventListener('DOMContentLoaded', () => {
+    setupTabs();
+    setupSupabaseForm();
+    iniciarDatos();
+  });
+
+  function setupSupabaseForm() {
+    document.getElementById('supabaseConnectBtn')?.addEventListener('click', async () => {
+      const url = document.getElementById('supabaseUrlInput').value.trim();
+      const key = document.getElementById('supabaseKeyInput').value.trim();
+      if (!url || !key) {
+        showSetup(true, 'Completa la URL y la clave anon.');
+        return;
+      }
+      window.VoluntariosDB.saveCredentials(url, key);
+      usarSoloLocal = false;
+      sessionStorage.removeItem('limpieza_solo_local');
+      window.VoluntariosDB.client = null;
+      window.VoluntariosDB.usingCloud = false;
+      await iniciarDatos();
+    });
+    document.getElementById('supabaseLocalBtn')?.addEventListener('click', async () => {
+      usarSoloLocal = true;
+      sessionStorage.setItem('limpieza_solo_local', '1');
+      window.VoluntariosDB.client = null;
+      window.VoluntariosDB.usingCloud = false;
+      showSetup(false);
+      await iniciarDatos();
+    });
+  }
+
+  async function refrescarDesdeNube() {
+    if (!window.VoluntariosDB.usingCloud) return;
+    try {
+      const data = await window.VoluntariosDB.loadAll();
+      voluntarios = data.voluntarios;
+      configDias = data.configDias;
+      planillasGuardadas = data.planillas;
+      window.voluntarios = voluntarios;
+      window.configDias = configDias;
+      window.planillasGuardadas = planillasGuardadas;
+      setSyncStatus('ok');
+      pintarDatos();
+    } catch (error) {
+      setSyncStatus(navigator.onLine ? 'error' : 'offline', error.message);
+    }
+  }
+
+  let remoteRefreshTimer = 0;
+  window.addEventListener('voluntarios:remote-change', () => {
+    clearTimeout(remoteRefreshTimer);
+    remoteRefreshTimer = setTimeout(() => refrescarDesdeNube(), 400);
+  });
+  window.addEventListener('voluntarios:online', () => {
+    if (usarSoloLocal) return;
+    iniciarDatos();
+  });
+
+  // ============================================================
+  //  PESTAÑAS
+  // ============================================================
+  function setupTabs() {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        const tabId = 'tab-' + btn.dataset.tab;
+        document.getElementById(tabId).classList.add('active');
+        if (btn.dataset.tab === 'planilla') renderSemanaSelect();
+        if (btn.dataset.tab === 'historial') renderHistorial();
+      });
+    });
+  }
+
+  // ============================================================
+  //  GESTIÓN DE VOLUNTARIOS
+  // ============================================================
+  function renderVoluntarios() {
+    const tbody = document.getElementById('voluntariosBody');
+    const emptyDiv = document.getElementById('voluntariosEmpty');
+    if (!voluntarios.length) {
+      tbody.innerHTML = '';
+      emptyDiv.style.display = 'block';
+      return;
+    }
+    emptyDiv.style.display = 'none';
+    tbody.innerHTML = voluntarios.map((v, idx) => {
+      const diasHtml = DIAS.map(d => {
+        const checked = v.dias?.includes(d) ? 'checked' : '';
+        return `<label><input type="checkbox" data-idx="${idx}" data-dia="${d}" ${checked} onchange="toggleDiaVoluntario(this)"> ${DIAS_ABREV[d]}</label>`;
+      }).join('');
+      const capitanChecked = v.esCapitan ? 'checked' : '';
+      const capitanDias = v.diasCapitan?.length ? `<span class="captain-days">${v.diasCapitan.map(d=>DIAS_ABREV[d]).join(', ')}</span>` : '<span class="text-muted">—</span>';
+      return `<tr>
+        <td><strong>${v.nombre}</strong>${v.esCapitan ? '<span class="captain-badge">CAP</span>' : ''}</td>
+        <td><div class="day-check">${diasHtml}</div></td>
+        <td style="text-align:center;"><input type="checkbox" ${capitanChecked} onchange="toggleCapitan(${idx}, this)"></td>
+        <td>${capitanDias}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="eliminarVoluntario(${idx})">✕</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  window.toggleDiaVoluntario = function(checkbox) {
+    const idx = parseInt(checkbox.dataset.idx);
+    const dia = checkbox.dataset.dia;
+    if (!voluntarios[idx].dias) voluntarios[idx].dias = [];
+    if (checkbox.checked) {
+      if (!voluntarios[idx].dias.includes(dia)) voluntarios[idx].dias.push(dia);
+    } else {
+      voluntarios[idx].dias = voluntarios[idx].dias.filter(d => d !== dia);
+    }
+    guardarVoluntarios();
+    renderVoluntarios();
+  };
+
+  window.toggleCapitan = function(idx, checkbox) {
+    voluntarios[idx].esCapitan = checkbox.checked;
+    if (!checkbox.checked) {
+      voluntarios[idx].diasCapitan = [];
+    } else {
+      // Preguntar días de capitán
+      const diasStr = prompt(`¿Qué días es capitán ${voluntarios[idx].nombre}? (separados por coma: Martes, Miércoles, Jueves, Viernes, Sábado)`, '');
+      if (diasStr) {
+        const seleccionados = diasStr.split(',').map(s => s.trim()).filter(d => DIAS.includes(d));
+        voluntarios[idx].diasCapitan = seleccionados;
+      } else {
+        voluntarios[idx].esCapitan = false;
+        checkbox.checked = false;
+      }
+    }
+    guardarVoluntarios();
+    renderVoluntarios();
+  };
+
+  window.eliminarVoluntario = function(idx) {
+    if (confirm(`¿Eliminar a ${voluntarios[idx].nombre}?`)) {
+      voluntarios.splice(idx, 1);
+      guardarVoluntarios();
+      renderVoluntarios();
+    }
+  };
+
+  // Añadir voluntario (botón)
+  document.getElementById('addVoluntarioBtn')?.addEventListener('click', () => {
+    const nombre = prompt('Nombre del voluntario:');
+    if (nombre && nombre.trim()) {
+      voluntarios.push({ id: crypto.randomUUID(), nombre: nombre.trim(), dias: [], esCapitan: false, diasCapitan: [] });
+      guardarVoluntarios();
+      renderVoluntarios();
+    }
+  });
+
+  // ============================================================
+  //  CONFIGURACIÓN DE DÍAS
+  // ============================================================
+  function renderConfigDias() {
+    const grid = document.getElementById('configDiasGrid');
+    grid.innerHTML = DIAS.map(dia => `
+      <div class="config-item">
+        <label>${dia}</label>
+        <input type="number" min="0" max="20" value="${configDias[dia] ?? 3}" data-dia="${dia}" onchange="actualizarConfigDia(this)">
+      </div>
+    `).join('');
+  }
+
+  window.actualizarConfigDia = function(input) {
+    const dia = input.dataset.dia;
+    let val = parseInt(input.value) || 0;
+    if (val < 0) val = 0;
+    configDias[dia] = val;
+    guardarConfig();
+  };
+
+  // ============================================================
+  //  GENERACIÓN DE PLANILLA
+  // ============================================================
+  function getProximasSemanas() {
+    // Retorna array de objetos { id, fechaInicio, fechaFin, etiqueta }
+    const semanas = [];
+    const hoy = new Date();
+    // Encontrar el próximo martes (o hoy si es martes)
+    let fechaBase = new Date(hoy);
+    const diaSemana = fechaBase.getDay(); // 0 domingo, 2 martes...
+    const diff = (2 - diaSemana + 7) % 7; // días hasta el próximo martes
+    fechaBase.setDate(fechaBase.getDate() + diff);
+    // Generar 8 semanas (incluyendo la actual si es martes)
+    for (let i = 0; i < 8; i++) {
+      const inicio = new Date(fechaBase);
+      inicio.setDate(inicio.getDate() + i * 7);
+      const fin = new Date(inicio);
+      fin.setDate(fin.getDate() + 5); // sábado
+      const id = `sem_${inicio.toISOString().slice(0,10)}`;
+      const etiqueta = `${inicio.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit'})} al ${fin.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit'})}`;
+      semanas.push({ id, fechaInicio: inicio, fechaFin: fin, etiqueta });
+    }
+    return semanas;
+  }
+
+  let semanasDisponibles = getProximasSemanas();
+
+  function renderSemanaSelect() {
+    const select = document.getElementById('semanaSelect');
+    const valorActual = select.value;
+    select.innerHTML = '<option value="">— Selecciona una semana —</option>' +
+      semanasDisponibles.map(s => `<option value="${s.id}">${s.etiqueta}</option>`).join('');
+    if (valorActual) select.value = valorActual;
+  }
+
+  // Algoritmo de asignación balanceada
+  function generarAsignaciones(periodoId, fechaInicio, fechaFin) {
+    // Contar asignaciones previas por voluntario (para no repetir seguido)
+    const conteoAsignaciones = {};
+    voluntarios.forEach(v => conteoAsignaciones[v.nombre] = 0);
+    // Revisar planillas anteriores (últimas 4 semanas) para dar peso
+    const planillasRecientes = planillasGuardadas.slice(-4);
+    planillasRecientes.forEach(p => {
+      if (p.asignaciones) {
+        Object.values(p.asignaciones).forEach(diaObj => {
+          diaObj.forEach(nombre => {
+            if (conteoAsignaciones[nombre] !== undefined) conteoAsignaciones[nombre] += 1;
+          });
+        });
+      }
+    });
+
+    // Para cada día, seleccionar voluntarios disponibles
+    const asignaciones = {};
+    DIAS.forEach(dia => {
+      const necesarios = configDias[dia] || 0;
+      // Filtrar voluntarios disponibles ese día
+      const disponibles = voluntarios.filter(v => v.dias && v.dias.includes(dia));
+      // Ordenar por menor conteo de asignaciones (más justo) y luego aleatorio
+      disponibles.sort((a, b) => {
+        const diff = (conteoAsignaciones[a.nombre] || 0) - (conteoAsignaciones[b.nombre] || 0);
+        if (diff !== 0) return diff;
+        return Math.random() - 0.5;
+      });
+      // Seleccionar los primeros "necesarios"
+      const seleccionados = disponibles.slice(0, necesarios).map(v => v.nombre);
+      // Actualizar conteo
+      seleccionados.forEach(n => conteoAsignaciones[n] = (conteoAsignaciones[n] || 0) + 1);
+      asignaciones[dia] = seleccionados;
+    });
+
+    // Insertar capitanes fijos (si están disponibles ese día)
+    DIAS.forEach(dia => {
+      const capitanesDelDia = voluntarios.filter(v => v.esCapitan && v.diasCapitan?.includes(dia) && v.dias?.includes(dia));
+      capitanesDelDia.forEach(cap => {
+        if (!asignaciones[dia].includes(cap.nombre)) {
+          // Reemplazar al último si excede, o agregar
+          if (asignaciones[dia].length >= (configDias[dia] || 0)) {
+            asignaciones[dia].pop(); // quitar el último
+          }
+          asignaciones[dia].push(cap.nombre);
+        }
+      });
+      // Asegurar que no haya duplicados
+      asignaciones[dia] = [...new Set(asignaciones[dia])];
+    });
+
+    return { asignaciones, conteoAsignaciones };
+  }
+
+  // Generar planilla para la semana seleccionada
+  document.getElementById('generarPlanillaBtn')?.addEventListener('click', async () => {
+    const select = document.getElementById('semanaSelect');
+    if (!select.value) { alert('Selecciona una semana'); return; }
+    const semana = semanasDisponibles.find(s => s.id === select.value);
+    if (!semana) return;
+
+    const existente = planillasGuardadas.find(p => p.periodo === semana.id);
+    if (existente && !confirm('Ya existe una planilla para esta semana. ¿Sobrescribir?')) return;
+
+    const { asignaciones } = generarAsignaciones(semana.id, semana.fechaInicio, semana.fechaFin);
+    const nuevaPlanilla = {
+      id: existente && typeof existente.id === 'string' ? existente.id : crypto.randomUUID(),
+      periodo: semana.id,
+      etiqueta: semana.etiqueta,
+      fechaInicio: semana.fechaInicio.toISOString(),
+      fechaFin: semana.fechaFin.toISOString(),
+      asignaciones,
+      configUsada: { ...configDias },
+      creada: new Date().toISOString()
+    };
+
+    planillasGuardadas = planillasGuardadas.filter(p => p.periodo !== semana.id);
+    planillasGuardadas.push(nuevaPlanilla);
+    await guardarPlanillas();
+
+    renderPlanilla(nuevaPlanilla);
+    renderHistorial();
+    renderSemanaSelect();
+  });
+
+  function renderPlanilla(planilla) {
+    const container = document.getElementById('planillaContent');
+    if (!planilla) {
+      container.innerHTML = '<div class="empty-state">Selecciona o crea una semana para generar la planilla.</div>';
+      return;
+    }
+    const { asignaciones, etiqueta } = planilla;
+    let html = `
+      <div class="planilla-header">
+        <span class="periodo-badge">📆 ${etiqueta}</span>
+        <span class="badge-config">Voluntarios requeridos: ${DIAS.map(d => `${DIAS_ABREV[d]}:${planilla.configUsada[d] || 0}`).join(' · ')}</span>
+      </div>
+      <div class="planilla-dias">
+    `;
+    DIAS.forEach(dia => {
+      const voluntariosDia = asignaciones[dia] || [];
+      const capitanesNombres = voluntarios.filter(v => v.esCapitan && v.diasCapitan?.includes(dia)).map(v => v.nombre);
+      html += `
+        <div class="dia-card">
+          <div class="dia-header">
+            <span>${dia}</span>
+            <span style="font-size:0.8rem; font-weight:500; background:white; padding:2px 10px; border-radius:30px;">${voluntariosDia.length}/${planilla.configUsada[dia] || 0}</span>
+          </div>
+          <div class="dia-body">
+            ${voluntariosDia.length ? voluntariosDia.map(nombre => {
+              const esCap = capitanesNombres.includes(nombre);
+              return `<div class="voluntario-item"><span>${nombre} ${esCap ? '<span class="capitan-tag">CAP</span>' : ''}</span></div>`;
+            }).join('') : '<div class="text-muted" style="font-size:0.8rem; text-align:center; padding:8px;">Sin asignar</div>'}
+          </div>
+        </div>
+      `;
+    });
+    html += `</div>`;
+    container.innerHTML = html;
+  }
+
+  // Exportar a JPG
+  document.getElementById('exportarJpgBtn')?.addEventListener('click', () => {
+    const planillaDiv = document.getElementById('planillaContent');
+    if (!planillaDiv || planillaDiv.querySelector('.empty-state')) {
+      alert('Primero genera una planilla para exportar.');
+      return;
+    }
+    html2canvas(planillaDiv, {
+      scale: 2,
+      backgroundColor: '#ffffff',
+      logging: false,
+      allowTaint: false,
+      useCORS: true
+    }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = `planilla_limpieza_${new Date().toISOString().slice(0,10)}.jpg`;
+      link.href = canvas.toDataURL('image/jpeg', 0.95);
+      link.click();
+    }).catch(err => {
+      alert('Error al exportar: ' + err.message);
+    });
+  });
+
+  // ============================================================
+  //  HISTORIAL
+  // ============================================================
+  function renderHistorial() {
+    const container = document.getElementById('historialList');
+    if (!planillasGuardadas.length) {
+      container.innerHTML = '<div class="empty-state">No hay planillas guardadas.</div>';
+      return;
+    }
+    // Ordenar por fecha de creación descendente
+    const ordenadas = [...planillasGuardadas].sort((a,b) => new Date(b.creada) - new Date(a.creada));
+    container.innerHTML = ordenadas.map(p => `
+      <div class="historial-item">
+        <div>
+          <span class="historial-fecha">${p.etiqueta}</span>
+          <span class="text-muted" style="margin-left:12px; font-size:0.8rem;">Creada: ${new Date(p.creada).toLocaleDateString()}</span>
+        </div>
+        <div class="historial-acciones">
+          <button class="btn btn-outline btn-sm" onclick="verPlanillaHistorial('${p.periodo}')">Ver</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.verPlanillaHistorial = function(periodoId) {
+    const planilla = planillasGuardadas.find(p => p.periodo === periodoId);
+    if (!planilla) return;
+    // Cambiar a pestaña planilla
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelector('[data-tab="planilla"]').classList.add('active');
+    document.getElementById('tab-planilla').classList.add('active');
+    // Actualizar select
+    renderSemanaSelect();
+    document.getElementById('semanaSelect').value = periodoId;
+    renderPlanilla(planilla);
+  };
+
+  // ============================================================
+  //  NUEVA SEMANA (RÁPIDA)
+  // ============================================================
+  document.getElementById('nuevaSemanaBtn')?.addEventListener('click', () => {
+    // Refrescar semanas (por si cambió la fecha)
+    semanasDisponibles = getProximasSemanas();
+    renderSemanaSelect();
+    // Seleccionar la primera disponible
+    if (semanasDisponibles.length) {
+      document.getElementById('semanaSelect').value = semanasDisponibles[0].id;
+    }
+    // Cambiar a pestaña planilla
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelector('[data-tab="planilla"]').classList.add('active');
+    document.getElementById('tab-planilla').classList.add('active');
+  });
+
+  // Exponer funciones necesarias
+  window.voluntarios = voluntarios;
+  window.configDias = configDias;
+  window.planillasGuardadas = planillasGuardadas;
+  window.guardarVoluntarios = guardarVoluntarios;
+</script>
+
+<!-- Estilos para el botón de exportar y ajustes menores -->
+<style>
+  /* Asegurar que los checkboxes de disponibilidad se vean bien */
+  .day-check label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 42px;
+    transition: all 0.1s;
+  }
+  .day-check label:has(input:checked) {
+    background: #3b82f6;
+    color: white;
+  }
+  .day-check label:has(input:checked) span {
+    color: white;
+  }
+  /* Botones dentro de la tabla */
+  td .btn-sm {
+    padding: 4px 12px;
+    font-size: 0.75rem;
+  }
+  /* Responsive */
+  @media (max-width: 768px) {
+    .app-container { padding: 20px 16px; }
+    h1 { font-size: 1.5rem; flex-wrap: wrap; }
+    .tabs { gap: 4px; }
+    .tab-btn { padding: 8px 14px; font-size: 0.85rem; }
+    .config-grid { grid-template-columns: repeat(2, 1fr); }
+    .planilla-dias { grid-template-columns: 1fr; }
+  }
+
+  .pwa-banner {
+    position: fixed;
+    left: 50%;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 560px;
+    background: #0f172a;
+    color: #fff;
+    border-radius: 24px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    box-shadow: 0 16px 40px -8px rgba(15, 23, 42, 0.45);
+    z-index: 1100;
+  }
+  .pwa-banner[hidden],
+  .pwa-toast[hidden] { display: none !important; }
+  .pwa-banner-text { display: flex; flex-direction: column; gap: 4px; min-width: 180px; }
+  .pwa-banner-text strong { font-size: 0.95rem; }
+  .pwa-banner-text span,
+  #pwaIosHint { color: #cbd5e1; font-size: 0.8rem; }
+  .pwa-banner-actions { display: flex; gap: 8px; align-items: center; }
+  .pwa-banner .btn-outline {
+    background: transparent;
+    color: #e2e8f0;
+    border-color: #475569;
+  }
+  .pwa-toast {
+    position: fixed;
+    left: 50%;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    background: #0f172a;
+    color: #fff;
+    border-radius: 40px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 1200;
+    font-size: 0.9rem;
+    box-shadow: 0 12px 30px -8px rgba(15, 23, 42, 0.4);
+  }
+  @media (display-mode: standalone) {
+    .pwa-banner { display: none !important; }
+  }
+</style>
+<div id="pwaInstallBanner" class="pwa-banner" hidden>
+  <div class="pwa-banner-text">
+    <strong>Instalar Voluntarios</strong>
+    <span>Úsala desde la pantalla de inicio, también sin conexión.</span>
+    <span id="pwaIosHint" hidden>En Safari: compartir → Añadir a pantalla de inicio.</span>
+  </div>
+  <div class="pwa-banner-actions">
+    <button type="button" class="btn btn-outline btn-sm" id="pwaInstallDismiss">Ahora no</button>
+    <button type="button" class="btn btn-sm" id="pwaInstallBtn">Instalar</button>
+  </div>
+</div>
+<div id="pwaToast" class="pwa-toast" hidden></div>
+<script src="js/pwa.js"></script>
+</body>
+</html>

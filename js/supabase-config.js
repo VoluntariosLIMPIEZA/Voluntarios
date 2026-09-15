@@ -1,0 +1,4 @@
+// Copia Project URL y anon public key desde:
+// Supabase → Project Settings → API
+window.SUPABASE_URL = 'https://TU-PROYECTO.supabase.co';
+window.SUPABASE_ANON_KEY = 'TU-ANON-KEY';
