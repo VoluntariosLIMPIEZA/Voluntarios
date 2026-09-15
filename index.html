@@ -67,21 +67,51 @@
       border-radius: 40px;
       font-weight: 500;
     }
-    .subhead {
-      color: #64748b;
-      margin-bottom: 28px;
-      font-size: 1rem;
-      border-left: 4px solid #3b82f6;
-      padding-left: 16px;
-    }
     .tabs {
       display: flex;
       gap: 8px;
       margin-bottom: 32px;
       flex-wrap: wrap;
+      align-items: center;
       border-bottom: 2px solid #e2e8f0;
       padding-bottom: 12px;
     }
+    .tab-dropdown {
+      position: relative;
+      margin-left: auto;
+    }
+    .tab-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      min-width: 220px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      box-shadow: 0 16px 32px -12px rgba(15, 23, 42, 0.22);
+      padding: 8px;
+      z-index: 80;
+    }
+    .tab-dropdown-menu[hidden] { display: none !important; }
+    .tab-dropdown-item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      border: none;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #334155;
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      text-align: left;
+    }
+    .tab-dropdown-item:hover { background: #f1f5f9; }
+    .tab-dropdown-item.active { background: #eff6ff; color: #1d4ed8; }
+    .tab-dropdown-item i { font-style: normal; }
     .tab-btn {
       background: transparent;
       border: none;
@@ -397,7 +427,7 @@
       align-items: flex-start;
       gap: 12px;
       flex-wrap: wrap;
-      margin-bottom: 8px;
+      margin-bottom: 24px;
     }
     .title-row h1 { margin-bottom: 0; }
     .sync-pill {
@@ -442,6 +472,59 @@
       color: #334155;
     }
     .loading-overlay[hidden] { display: none !important; }
+    .acceso-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1300;
+      padding: 24px;
+    }
+    .acceso-overlay[hidden] { display: none !important; }
+    .acceso-dialog {
+      width: 100%;
+      max-width: 380px;
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 24px 48px -16px rgba(15, 23, 42, 0.35);
+    }
+    .acceso-dialog h2 {
+      font-size: 1.15rem;
+      margin-bottom: 8px;
+      color: #0f172a;
+    }
+    .acceso-dialog p {
+      color: #64748b;
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+    .acceso-dialog input {
+      width: 100%;
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      border-radius: 16px;
+      border: 1.5px solid #cbd5e1;
+      font-family: inherit;
+      font-size: 1.1rem;
+      letter-spacing: 0.2em;
+      text-align: center;
+      background: white;
+    }
+    .acceso-dialog input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+    .acceso-error {
+      color: #dc2626;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin: -4px 0 12px;
+    }
+    .acceso-error[hidden] { display: none !important; }
   </style>
 </head>
 <body>
@@ -450,8 +533,6 @@
     <h1>🧹 Voluntarios de Limpieza <span>PWA</span></h1>
     <div id="syncStatus" class="sync-pill">Local</div>
   </div>
-  <div class="subhead">Organiza los turnos semanales, capitanes y exporta la planilla. Los datos se guardan en Supabase.</div>
-
   <div id="supabaseSetup" class="card" hidden>
     <div class="card-title">Conectar Supabase</div>
     <div class="setup-steps">
@@ -481,9 +562,16 @@
   <!-- Pestañas -->
   <div class="tabs">
     <button class="tab-btn active" data-tab="voluntarios"><i>👥</i> Voluntarios</button>
-    <button class="tab-btn" data-tab="config"><i>⚙️</i> Configuración</button>
     <button class="tab-btn" data-tab="planilla"><i>📅</i> Planilla semanal</button>
-    <button class="tab-btn" data-tab="historial"><i>🗂️</i> Historial</button>
+    <div class="tab-dropdown" id="menuConfigDropdown">
+      <button type="button" class="tab-btn" id="menuConfigBtn" aria-haspopup="true" aria-expanded="false" aria-label="Configuración" title="Configuración">
+        <i>⚙️</i>
+      </button>
+      <div class="tab-dropdown-menu" id="menuConfigPanel" hidden>
+        <button type="button" class="tab-dropdown-item" data-tab="config"><i>⚙️</i> Configuración</button>
+        <button type="button" class="tab-dropdown-item" data-tab="historial"><i>🗂️</i> Historial</button>
+      </div>
+    </div>
   </div>
 
   <!-- Contenido: Voluntarios -->
@@ -554,6 +642,19 @@
       <div id="historialList">
         <div class="empty-state">No hay planillas guardadas.</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<div id="accesoModal" class="acceso-overlay" hidden>
+  <div class="acceso-dialog" role="dialog" aria-modal="true" aria-labelledby="accesoTitulo">
+    <h2 id="accesoTitulo">Código de acceso</h2>
+    <p>Introduce el código para continuar. Se guardará en este dispositivo y no volverá a pedirse.</p>
+    <input id="accesoCodigoInput" type="password" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="••••">
+    <p id="accesoError" class="acceso-error" hidden>Código incorrecto.</p>
+    <div class="flex">
+      <button type="button" class="btn btn-outline" id="accesoCancelarBtn">Cancelar</button>
+      <button type="button" class="btn" id="accesoConfirmarBtn">Continuar</button>
     </div>
   </div>
 </div>
@@ -756,21 +857,153 @@
   });
 
   // ============================================================
+  //  ACCESO LOCAL (código 0044, una vez por dispositivo)
+  // ============================================================
+  const CODIGO_ACCESO = '0044';
+  const CLAVE_ACCESO_LOCAL = 'limpieza_acceso_admin';
+  let resolverAcceso = null;
+
+  function tieneAccesoAdmin() {
+    return localStorage.getItem(CLAVE_ACCESO_LOCAL) === '1';
+  }
+
+  function cerrarModalAcceso(concedido) {
+    const modal = document.getElementById('accesoModal');
+    const input = document.getElementById('accesoCodigoInput');
+    const error = document.getElementById('accesoError');
+    if (modal) modal.hidden = true;
+    if (input) input.value = '';
+    if (error) error.hidden = true;
+    if (resolverAcceso) {
+      const resolver = resolverAcceso;
+      resolverAcceso = null;
+      resolver(concedido);
+    }
+  }
+
+  function confirmarCodigoAcceso() {
+    const input = document.getElementById('accesoCodigoInput');
+    const error = document.getElementById('accesoError');
+    const codigo = (input?.value || '').trim();
+    if (codigo === CODIGO_ACCESO) {
+      localStorage.setItem(CLAVE_ACCESO_LOCAL, '1');
+      cerrarModalAcceso(true);
+      return;
+    }
+    if (error) error.hidden = false;
+    if (input) {
+      input.value = '';
+      input.focus();
+    }
+  }
+
+  let promesaAcceso = null;
+
+  function pedirAccesoAdmin() {
+    if (tieneAccesoAdmin()) return Promise.resolve(true);
+    if (promesaAcceso) return promesaAcceso;
+    promesaAcceso = new Promise((resolve) => {
+      resolverAcceso = resolve;
+      cerrarMenuConfig();
+      const modal = document.getElementById('accesoModal');
+      const input = document.getElementById('accesoCodigoInput');
+      const error = document.getElementById('accesoError');
+      if (error) error.hidden = true;
+      if (modal) modal.hidden = false;
+      if (input) {
+        input.value = '';
+        setTimeout(() => input.focus(), 50);
+      }
+    }).finally(() => { promesaAcceso = null; });
+    return promesaAcceso;
+  }
+
+  document.getElementById('accesoConfirmarBtn')?.addEventListener('click', confirmarCodigoAcceso);
+  document.getElementById('accesoCancelarBtn')?.addEventListener('click', () => cerrarModalAcceso(false));
+  document.getElementById('accesoCodigoInput')?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      confirmarCodigoAcceso();
+    }
+  });
+  document.getElementById('accesoModal')?.addEventListener('click', (event) => {
+    if (event.target.id === 'accesoModal') cerrarModalAcceso(false);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    const modal = document.getElementById('accesoModal');
+    if (modal && !modal.hidden) {
+      cerrarModalAcceso(false);
+      return;
+    }
+    cerrarMenuConfig();
+  });
+
+  // ============================================================
   //  PESTAÑAS
   // ============================================================
+  function cerrarMenuConfig() {
+    const panel = document.getElementById('menuConfigPanel');
+    const btn = document.getElementById('menuConfigBtn');
+    if (panel) panel.hidden = true;
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+
+  function activarPestana(tab, { skipAccess } = {}) {
+    const ir = () => {
+      document.querySelectorAll('.tabs > .tab-btn[data-tab]').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-dropdown-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      const trigger = document.querySelector(`.tabs > .tab-btn[data-tab="${tab}"]`);
+      if (trigger) trigger.classList.add('active');
+      const item = document.querySelector(`.tab-dropdown-item[data-tab="${tab}"]`);
+      if (item) item.classList.add('active');
+      const menuBtn = document.getElementById('menuConfigBtn');
+      if (menuBtn) menuBtn.classList.toggle('active', tab === 'config' || tab === 'historial');
+      const panel = document.getElementById('tab-' + tab);
+      if (panel) panel.classList.add('active');
+      if (tab === 'planilla') renderSemanaSelect();
+      if (tab === 'historial') renderHistorial();
+      cerrarMenuConfig();
+    };
+
+    if (tab === 'config' && !skipAccess && !tieneAccesoAdmin()) {
+      cerrarMenuConfig();
+      pedirAccesoAdmin().then((ok) => { if (ok) ir(); });
+      return;
+    }
+    ir();
+  }
+
   function setupTabs() {
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
-        const tabId = 'tab-' + btn.dataset.tab;
-        document.getElementById(tabId).classList.add('active');
-        if (btn.dataset.tab === 'planilla') renderSemanaSelect();
-        if (btn.dataset.tab === 'historial') renderHistorial();
-      });
+    document.querySelectorAll('.tabs > .tab-btn[data-tab]').forEach(btn => {
+      btn.addEventListener('click', () => activarPestana(btn.dataset.tab));
+    });
+
+    const menuBtn = document.getElementById('menuConfigBtn');
+    const panel = document.getElementById('menuConfigPanel');
+    menuBtn?.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const abierto = panel && !panel.hidden;
+      if (abierto) {
+        cerrarMenuConfig();
+      } else if (panel) {
+        panel.hidden = false;
+        menuBtn.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    document.querySelectorAll('.tab-dropdown-item').forEach(item => {
+      item.addEventListener('click', () => activarPestana(item.dataset.tab));
+    });
+
+    document.addEventListener('click', (event) => {
+      const dropdown = document.getElementById('menuConfigDropdown');
+      if (dropdown && !dropdown.contains(event.target)) cerrarMenuConfig();
     });
   }
+
+  window.activarPestana = activarPestana;
 
   // ============================================================
   //  GESTIÓN DE VOLUNTARIOS
@@ -964,6 +1197,7 @@
 
   // Generar planilla para la semana seleccionada
   document.getElementById('generarPlanillaBtn')?.addEventListener('click', async () => {
+    if (!(await pedirAccesoAdmin())) return;
     const select = document.getElementById('semanaSelect');
     if (!select.value) { alert('Selecciona una semana'); return; }
     const semana = semanasDisponibles.find(s => s.id === select.value);
@@ -1079,13 +1313,7 @@
   window.verPlanillaHistorial = function(periodoId) {
     const planilla = planillasGuardadas.find(p => p.periodo === periodoId);
     if (!planilla) return;
-    // Cambiar a pestaña planilla
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    document.querySelector('[data-tab="planilla"]').classList.add('active');
-    document.getElementById('tab-planilla').classList.add('active');
-    // Actualizar select
-    renderSemanaSelect();
+    activarPestana('planilla');
     document.getElementById('semanaSelect').value = periodoId;
     renderPlanilla(planilla);
   };
@@ -1093,19 +1321,14 @@
   // ============================================================
   //  NUEVA SEMANA (RÁPIDA)
   // ============================================================
-  document.getElementById('nuevaSemanaBtn')?.addEventListener('click', () => {
-    // Refrescar semanas (por si cambió la fecha)
+  document.getElementById('nuevaSemanaBtn')?.addEventListener('click', async () => {
+    if (!(await pedirAccesoAdmin())) return;
     semanasDisponibles = getProximasSemanas();
+    activarPestana('planilla');
     renderSemanaSelect();
-    // Seleccionar la primera disponible
     if (semanasDisponibles.length) {
       document.getElementById('semanaSelect').value = semanasDisponibles[0].id;
     }
-    // Cambiar a pestaña planilla
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    document.querySelector('[data-tab="planilla"]').classList.add('active');
-    document.getElementById('tab-planilla').classList.add('active');
   });
 
   // Exponer funciones necesarias

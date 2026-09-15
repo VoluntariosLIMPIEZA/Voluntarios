@@ -118,7 +118,11 @@
   document.addEventListener('DOMContentLoaded', () => {
     const tab = new URLSearchParams(location.search).get('tab');
     if (!tab) return;
-    const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+    if (typeof window.activarPestana === 'function') {
+      window.activarPestana(tab);
+      return;
+    }
+    const btn = document.querySelector(`[data-tab="${tab}"]`);
     if (btn) btn.click();
   });
 })();
