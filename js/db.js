@@ -27,6 +27,13 @@
     localStorage.setItem(key, JSON.stringify(value));
   }
 
+  function normalizeUrl(url) {
+    return String(url || '')
+      .trim()
+      .replace(/\/rest\/v1\/?$/i, '')
+      .replace(/\/+$/, '');
+  }
+
   function isPlaceholder(value) {
     if (!value) return true;
     return /TU-PROYECTO|TU-ANON-KEY|YOUR_|CHANGEME/i.test(value);
@@ -38,10 +45,17 @@
     skipRealtime: false,
 
     getCredentials() {
+      const fromFile = {
+        url: normalizeUrl(window.SUPABASE_URL || ''),
+        key: String(window.SUPABASE_ANON_KEY || '').trim()
+      };
+      if (fromFile.url.startsWith('https://') && fromFile.key && !isPlaceholder(fromFile.url) && !isPlaceholder(fromFile.key)) {
+        return fromFile;
+      }
       const saved = readJson(STORAGE_CREDENTIALS, null);
-      const url = (saved && saved.url) || window.SUPABASE_URL || '';
-      const key = (saved && saved.key) || window.SUPABASE_ANON_KEY || '';
-      return { url: String(url).trim(), key: String(key).trim() };
+      const url = normalizeUrl((saved && saved.url) || '');
+      const key = String((saved && saved.key) || '').trim();
+      return { url, key };
     },
 
     saveCredentials(url, key) {

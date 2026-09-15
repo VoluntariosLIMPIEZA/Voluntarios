@@ -20,7 +20,7 @@
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <script src="vendor/html2canvas.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/db.js"></script>
   <style>
@@ -649,6 +649,10 @@
   async function iniciarDatos() {
     setLoading(true);
     try {
+      if (window.VoluntariosDB.isConfigured()) {
+        usarSoloLocal = false;
+        sessionStorage.removeItem('limpieza_solo_local');
+      }
       if (!usarSoloLocal) {
         await window.VoluntariosDB.init();
       }

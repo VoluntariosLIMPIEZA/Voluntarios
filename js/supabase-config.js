@@ -1,4 +1,3 @@
-// Copia Project URL y anon public key desde:
-// Supabase → Project Settings → API
-window.SUPABASE_URL = 'https://TU-PROYECTO.supabase.co';
-window.SUPABASE_ANON_KEY = 'TU-ANON-KEY';
+// Proyecto Supabase de Voluntarios de Limpieza
+window.SUPABASE_URL = 'https://fnznnaartbdkfmjuzngk.supabase.co';
+window.SUPABASE_ANON_KEY = 'sb_publishable_cI4n4_t7YSf-tDlJEBnl6g_d05qI67i';
