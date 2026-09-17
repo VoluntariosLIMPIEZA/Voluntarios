@@ -488,8 +488,26 @@
       font-size: 0.9rem;
       padding: 4px 0;
       border-bottom: 1px dashed #e2e8f0;
+      gap: 8px;
     }
     .voluntario-item:last-child { border-bottom: none; }
+    .voluntario-item.soy-yo {
+      background: #dbeafe;
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin: 0 -4px;
+      border-bottom: none;
+      font-weight: 700;
+      color: #1e40af;
+    }
+    .dia-card.dia-mio {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
+    }
+    .dia-card.dia-mio .dia-header {
+      background: #dbeafe;
+      color: #1e40af;
+    }
     .capitan-tag {
       background: #f59e0b;
       color: #1e1e1e;
@@ -497,6 +515,96 @@
       font-size: 0.65rem;
       padding: 2px 8px;
       border-radius: 30px;
+    }
+    .btn-quitar-asig {
+      border: none;
+      background: #fee2e2;
+      color: #b91c1c;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .btn-quitar-asig:hover { background: #fecaca; }
+    .planilla-add {
+      margin-top: 10px;
+    }
+    .planilla-add select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1.5px solid #cbd5e1;
+      font-family: inherit;
+      font-size: 0.8rem;
+      background: white;
+    }
+    .planilla-hint {
+      color: #64748b;
+      font-size: 0.85rem;
+      margin: -4px 0 12px;
+    }
+    .turno-aviso {
+      border-left: 4px solid #0284c7;
+      background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%);
+    }
+    .turno-aviso.vacio {
+      border-left-color: #94a3b8;
+      background: #f8fafc;
+    }
+    .turno-aviso-kicker {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #0369a1;
+      margin-bottom: 6px;
+    }
+    .turno-aviso-fecha {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .turno-aviso p {
+      color: #64748b;
+      font-size: 0.88rem;
+      margin-top: 4px;
+    }
+    .turno-lista {
+      display: flex;
+      flex-direction: column;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .turno-lista-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px dashed #e2e8f0;
+      font-size: 0.9rem;
+    }
+    .turno-lista-item:last-child { border-bottom: none; }
+    .turno-lista-item.soy-yo {
+      background: #dbeafe;
+      margin: 0 -12px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      border-bottom: none;
+      color: #1e40af;
+      font-weight: 700;
+    }
+    .turno-lista-item span:last-child {
+      color: #0369a1;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .turno-lista-item .sin-turno {
+      color: #94a3b8;
+      font-weight: 500;
     }
 
     /* Historial */
@@ -824,6 +932,7 @@
 
   <!-- Contenido: Voluntarios -->
   <div id="tab-voluntarios" class="tab-content active">
+    <div class="card turno-aviso" id="proximoTurnoCard" hidden></div>
     <div class="card register-panel" id="registroCard">
       <div>
         <div class="eyebrow" id="registroCardEyebrow">Inscripción</div>
@@ -879,12 +988,13 @@
   <div id="tab-planilla" class="tab-content">
     <div class="card">
       <div class="card-title">
-        Generar planilla
+        <span id="planillaTitulo">Generar planilla</span>
         <button class="btn btn-outline btn-sm" id="nuevaSemanaBtn">+ Nueva semana</button>
       </div>
+      <p class="planilla-hint" id="planillaHint">Genera la planilla de la semana y luego ajusta quién va cada día.</p>
       <div class="flex">
         <div>
-          <label class="text-muted" style="font-size:0.8rem; font-weight:600;">Semana seleccionada</label>
+          <label class="text-muted" style="font-size:0.8rem; font-weight:600;" id="semanaSelectLabel">Semana seleccionada</label>
           <select id="semanaSelect" style="padding:10px 16px; border-radius:40px; border:1.5px solid #cbd5e1; font-family:Inter; font-weight:500; background:white; min-width:240px;">
             <option value="">— Selecciona una semana —</option>
           </select>
@@ -935,11 +1045,11 @@
       <div class="role-choices">
         <button type="button" class="role-choice" id="elegirVoluntarioBtn">
           <strong>Soy voluntario</strong>
-          <span>Elige tu nombre o agrega uno nuevo. Solo podrás modificar tus datos y tus días.</span>
+          <span>Elige tu nombre o agrega uno nuevo. Verás el programa semanal y cuándo te toca.</span>
         </button>
         <button type="button" class="role-choice" id="elegirAdminBtn">
           <strong>Soy administrador</strong>
-          <span>Podrás agregar personas, editar días de cualquiera y eliminar registros.</span>
+          <span>Podrás generar la planilla, modificarla y administrar a los voluntarios.</span>
         </button>
       </div>
       <div class="modal-actions">
@@ -1232,11 +1342,12 @@
 
   function pintarDatos() {
     sincronizarIdentidadLocal();
+    aplicarPermisosUI();
     renderVoluntarios();
     renderConfigDias();
+    renderProximosTurnos();
     renderSemanaSelect();
     renderHistorial();
-    aplicarPermisosUI();
   }
 
   async function iniciarDatos() {
@@ -1387,8 +1498,22 @@
     if (configItem) configItem.hidden = !admin;
     const genBtn = document.getElementById('generarPlanillaBtn');
     const nuevaBtn = document.getElementById('nuevaSemanaBtn');
+    const exportBtn = document.getElementById('exportarJpgBtn');
+    const titulo = document.getElementById('planillaTitulo');
+    const hint = document.getElementById('planillaHint');
+    const semanaLabel = document.getElementById('semanaSelectLabel');
+    const planillaTab = document.querySelector('.tabs > .tab-btn[data-tab="planilla"]');
     if (genBtn) genBtn.hidden = !admin;
     if (nuevaBtn) nuevaBtn.hidden = !admin;
+    if (exportBtn) exportBtn.hidden = !admin;
+    if (titulo) titulo.textContent = admin ? 'Generar planilla' : 'Programa semanal';
+    if (hint) {
+      hint.textContent = admin
+        ? 'Genera la planilla de la semana y luego puedes modificar quién va cada día.'
+        : 'Consulta el programa de la semana. Tu nombre aparece resaltado.';
+    }
+    if (semanaLabel) semanaLabel.textContent = admin ? 'Semana seleccionada' : 'Programa';
+    if (planillaTab) planillaTab.innerHTML = admin ? '<i>📅</i> Planilla semanal' : '<i>📅</i> Programa';
     if (!admin) {
       const configTab = document.getElementById('tab-config');
       if (configTab?.classList.contains('active')) activarPestana('voluntarios');
@@ -1687,10 +1812,15 @@
       if (menuBtn) menuBtn.classList.toggle('active', tab === 'config' || tab === 'historial');
       const panel = document.getElementById('tab-' + tab);
       if (panel) panel.classList.add('active');
-    if (tab === 'planilla') renderSemanaSelect();
-    if (tab === 'historial') renderHistorial();
-    if (tab === 'voluntarios') renderVoluntarios();
-    cerrarMenuConfig();
+      if (tab === 'planilla') {
+        renderSemanaSelect();
+      }
+      if (tab === 'historial') renderHistorial();
+      if (tab === 'voluntarios') {
+        renderVoluntarios();
+        renderProximosTurnos();
+      }
+      cerrarMenuConfig();
     };
 
     if (tab === 'config' && !tieneAccesoAdmin()) {
@@ -2037,21 +2167,172 @@
   // ============================================================
   //  GENERACIÓN DE PLANILLA
   // ============================================================
+  function parseFechaLocal(valor) {
+    if (valor instanceof Date && !Number.isNaN(valor.getTime())) {
+      return new Date(valor.getFullYear(), valor.getMonth(), valor.getDate());
+    }
+    const texto = String(valor || '');
+    const iso = texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+    const d = new Date(valor);
+    if (Number.isNaN(d.getTime())) return null;
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  function inicioDeHoy() {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    return hoy;
+  }
+
+  function fechaDiaPlanilla(planilla, dia) {
+    const inicio = parseFechaLocal(planilla?.fechaInicio);
+    if (!inicio) return null;
+    const offset = DIAS.indexOf(dia);
+    if (offset < 0) return inicio;
+    const fecha = new Date(inicio);
+    fecha.setDate(fecha.getDate() + offset);
+    return fecha;
+  }
+
+  function nombresCoinciden(a, b) {
+    const na = normalizarNombreComparacion(a);
+    const nb = normalizarNombreComparacion(b);
+    return Boolean(na && nb && na === nb);
+  }
+
+  function nombreDelDispositivo() {
+    const mio = voluntarios.find((v) => esMiVoluntario(v));
+    return mio ? nombreCompleto(mio) : '';
+  }
+
+  function esNombreDelDispositivo(nombre) {
+    const mio = nombreDelDispositivo();
+    return Boolean(mio && nombresCoinciden(nombre, mio));
+  }
+
+  function formatearTurno(turno) {
+    if (!turno) return '';
+    const fechaTxt = turno.fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+    return `${turno.dia} ${fechaTxt}`;
+  }
+
+  function getTurnosDe(nombre) {
+    const hoy = inicioDeHoy();
+    const turnos = [];
+    for (const planilla of planillasGuardadas) {
+      for (const dia of DIAS) {
+        const asignados = planilla.asignaciones?.[dia] || [];
+        if (!asignados.some((n) => nombresCoinciden(n, nombre))) continue;
+        const fecha = fechaDiaPlanilla(planilla, dia);
+        if (!fecha) continue;
+        const vol = voluntarios.find((v) => nombresCoinciden(nombreCompleto(v), nombre));
+        turnos.push({
+          fecha,
+          dia,
+          etiqueta: planilla.etiqueta,
+          periodo: planilla.periodo,
+          esCapitan: Boolean(vol?.esCapitan && vol.diasCapitan?.includes(dia)),
+          pasado: fecha < hoy
+        });
+      }
+    }
+    turnos.sort((a, b) => a.fecha - b.fecha);
+    return turnos;
+  }
+
+  function getProximoTurnoDe(nombre) {
+    const turnos = getTurnosDe(nombre);
+    return turnos.find((t) => !t.pasado) || null;
+  }
+
+  function getTurnoAvisoDe(nombre) {
+    const turnos = getTurnosDe(nombre);
+    const proximo = turnos.find((t) => !t.pasado);
+    if (proximo) return { ...proximo, estado: 'proximo' };
+    const ultimo = [...turnos].reverse()[0];
+    if (ultimo) return { ...ultimo, estado: 'pasado' };
+    return null;
+  }
+
+  function renderProximosTurnos() {
+    const card = document.getElementById('proximoTurnoCard');
+    if (!card) return;
+    const admin = tieneAccesoAdmin();
+    const miNombre = nombreDelDispositivo();
+
+    if (admin) {
+      if (!voluntarios.length) {
+        card.hidden = true;
+        card.innerHTML = '';
+        return;
+      }
+      const items = [...voluntarios]
+        .sort((a, b) => nombreCompleto(a).localeCompare(nombreCompleto(b), 'es'))
+        .map((v) => {
+          const nombre = nombreCompleto(v);
+          const turno = getTurnoAvisoDe(nombre);
+          const texto = !turno
+            ? 'Sin turno asignado'
+            : (turno.estado === 'pasado' ? `Fue ${formatearTurno(turno)}` : formatearTurno(turno));
+          return `<div class="turno-lista-item">
+            <strong>${escapeHtml(nombre)}</strong>
+            <span class="${turno && turno.estado !== 'pasado' ? '' : 'sin-turno'}">${escapeHtml(texto)}</span>
+          </div>`;
+        }).join('');
+      card.classList.remove('vacio');
+      card.hidden = false;
+      card.innerHTML = `
+        <div class="turno-aviso-kicker">Próximos turnos</div>
+        <div class="turno-aviso-fecha">Aviso de cada voluntario</div>
+        <p>Cuándo le toca a cada persona, según la planilla publicada.</p>
+        <div class="turno-lista">${items}</div>`;
+      return;
+    }
+
+    if (!miNombre) {
+      card.hidden = true;
+      card.innerHTML = '';
+      return;
+    }
+
+    const turno = getTurnoAvisoDe(miNombre);
+    card.hidden = false;
+    if (!turno) {
+      card.classList.add('vacio');
+      card.innerHTML = `
+        <div class="turno-aviso-kicker">Tu próximo turno</div>
+        <div class="turno-aviso-fecha">Todavía no tienes un turno asignado</div>
+        <p>Cuando se publique el programa, aquí verás el día que te corresponde.</p>`;
+      return;
+    }
+    if (turno.estado === 'pasado') {
+      card.classList.add('vacio');
+      card.innerHTML = `
+        <div class="turno-aviso-kicker">Tu último turno</div>
+        <div class="turno-aviso-fecha">${escapeHtml(formatearTurno(turno))}</div>
+        <p>Semana del ${escapeHtml(turno.etiqueta)}. Aún no hay un próximo turno publicado.</p>`;
+      return;
+    }
+    card.classList.remove('vacio');
+    card.innerHTML = `
+      <div class="turno-aviso-kicker">Tu próximo turno</div>
+      <div class="turno-aviso-fecha">${escapeHtml(formatearTurno(turno))}</div>
+      <p>Semana del ${escapeHtml(turno.etiqueta)}${turno.esCapitan ? ' · Vas como capitán' : ''}.</p>`;
+  }
+
   function getProximasSemanas() {
-    // Retorna array de objetos { id, fechaInicio, fechaFin, etiqueta }
     const semanas = [];
     const hoy = new Date();
-    // Encontrar el próximo martes (o hoy si es martes)
     let fechaBase = new Date(hoy);
-    const diaSemana = fechaBase.getDay(); // 0 domingo, 2 martes...
-    const diff = (2 - diaSemana + 7) % 7; // días hasta el próximo martes
+    const diaSemana = fechaBase.getDay();
+    const diff = (2 - diaSemana + 7) % 7;
     fechaBase.setDate(fechaBase.getDate() + diff);
-    // Generar 8 semanas (incluyendo la actual si es martes)
     for (let i = 0; i < 8; i++) {
       const inicio = new Date(fechaBase);
       inicio.setDate(inicio.getDate() + i * 7);
       const fin = new Date(inicio);
-      fin.setDate(fin.getDate() + 5); // sábado
+      fin.setDate(fin.getDate() + 5);
       const id = `sem_${inicio.toISOString().slice(0,10)}`;
       const etiqueta = `${inicio.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit'})} al ${fin.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit'})}`;
       semanas.push({ id, fechaInicio: inicio, fechaFin: fin, etiqueta });
@@ -2061,20 +2342,78 @@
 
   let semanasDisponibles = getProximasSemanas();
 
-  function renderSemanaSelect() {
-    const select = document.getElementById('semanaSelect');
-    const valorActual = select.value;
-    select.innerHTML = '<option value="">— Selecciona una semana —</option>' +
-      semanasDisponibles.map(s => `<option value="${s.id}">${s.etiqueta}</option>`).join('');
-    if (valorActual) select.value = valorActual;
+  function getPlanillaPorDefecto() {
+    const hoy = inicioDeHoy();
+    const ordenadas = [...planillasGuardadas].sort((a, b) => {
+      const fa = parseFechaLocal(a.fechaInicio)?.getTime() || 0;
+      const fb = parseFechaLocal(b.fechaInicio)?.getTime() || 0;
+      return fa - fb;
+    });
+    const vigente = ordenadas.find((p) => {
+      const fin = parseFechaLocal(p.fechaFin);
+      return fin && fin >= hoy;
+    });
+    return vigente || ordenadas[ordenadas.length - 1] || null;
   }
 
-  // Algoritmo de asignación balanceada
+  function asegurarOpcionSemana(planilla) {
+    const select = document.getElementById('semanaSelect');
+    if (!select || !planilla?.periodo) return;
+    if (![...select.options].some((opt) => opt.value === planilla.periodo)) {
+      const opt = document.createElement('option');
+      opt.value = planilla.periodo;
+      opt.textContent = planilla.etiqueta || planilla.periodo;
+      select.appendChild(opt);
+    }
+    select.value = planilla.periodo;
+  }
+
+  function renderSemanaSelect() {
+    const select = document.getElementById('semanaSelect');
+    if (!select) return;
+    const valorActual = select.value;
+    const admin = tieneAccesoAdmin();
+    if (admin) {
+      semanasDisponibles = getProximasSemanas();
+      const ids = new Set(semanasDisponibles.map((s) => s.id));
+      const extras = planillasGuardadas.filter((p) => p.periodo && !ids.has(p.periodo));
+      select.innerHTML = '<option value="">— Selecciona una semana —</option>' +
+        semanasDisponibles.map((s) => `<option value="${s.id}">${escapeHtml(s.etiqueta)}</option>`).join('') +
+        extras.map((p) => `<option value="${escapeHtml(p.periodo)}">${escapeHtml(p.etiqueta || p.periodo)}</option>`).join('');
+    } else {
+      const programas = [...planillasGuardadas].sort((a, b) => {
+        const fa = parseFechaLocal(a.fechaInicio)?.getTime() || 0;
+        const fb = parseFechaLocal(b.fechaInicio)?.getTime() || 0;
+        return fa - fb;
+      });
+      select.innerHTML = programas.length
+        ? programas.map((p) => `<option value="${escapeHtml(p.periodo)}">${escapeHtml(p.etiqueta || p.periodo)}</option>`).join('')
+        : '<option value="">— No hay programas publicados —</option>';
+    }
+    const opciones = [...select.options].map((opt) => opt.value).filter(Boolean);
+    if (valorActual && opciones.includes(valorActual)) {
+      select.value = valorActual;
+    } else {
+      const def = getPlanillaPorDefecto();
+      if (def && opciones.includes(def.periodo)) select.value = def.periodo;
+      else if (!admin && opciones.length) select.value = opciones[0];
+    }
+    mostrarPlanillaSeleccionada();
+  }
+
+  function mostrarPlanillaSeleccionada() {
+    const select = document.getElementById('semanaSelect');
+    const periodo = select?.value || '';
+    if (!periodo) {
+      renderPlanilla(null);
+      return;
+    }
+    renderPlanilla(planillasGuardadas.find((p) => p.periodo === periodo) || null);
+  }
+
   function generarAsignaciones(periodoId, fechaInicio, fechaFin) {
-    // Contar asignaciones previas por voluntario (para no repetir seguido)
     const conteoAsignaciones = {};
     voluntarios.forEach(v => conteoAsignaciones[nombreCompleto(v)] = 0);
-    // Revisar planillas anteriores (últimas 4 semanas) para dar peso
     const planillasRecientes = planillasGuardadas.slice(-4);
     planillasRecientes.forEach(p => {
       if (p.asignaciones) {
@@ -2086,46 +2425,37 @@
       }
     });
 
-    // Para cada día, seleccionar voluntarios disponibles
     const asignaciones = {};
     DIAS.forEach(dia => {
       const necesarios = configDias[dia] || 0;
-      // Filtrar voluntarios disponibles ese día
       const disponibles = voluntarios.filter(v => v.dias && v.dias.includes(dia));
-      // Ordenar por menor conteo de asignaciones (más justo) y luego aleatorio
       disponibles.sort((a, b) => {
         const diff = (conteoAsignaciones[nombreCompleto(a)] || 0) - (conteoAsignaciones[nombreCompleto(b)] || 0);
         if (diff !== 0) return diff;
         return Math.random() - 0.5;
       });
-      // Seleccionar los primeros "necesarios"
       const seleccionados = disponibles.slice(0, necesarios).map(v => nombreCompleto(v));
-      // Actualizar conteo
       seleccionados.forEach(n => conteoAsignaciones[n] = (conteoAsignaciones[n] || 0) + 1);
       asignaciones[dia] = seleccionados;
     });
 
-    // Insertar capitanes fijos (si están disponibles ese día)
     DIAS.forEach(dia => {
       const capitanesDelDia = voluntarios.filter(v => v.esCapitan && v.diasCapitan?.includes(dia) && v.dias?.includes(dia));
       capitanesDelDia.forEach(cap => {
         const nombreCap = nombreCompleto(cap);
         if (!asignaciones[dia].includes(nombreCap)) {
-          // Reemplazar al último si excede, o agregar
           if (asignaciones[dia].length >= (configDias[dia] || 0)) {
-            asignaciones[dia].pop(); // quitar el último
+            asignaciones[dia].pop();
           }
           asignaciones[dia].push(nombreCap);
         }
       });
-      // Asegurar que no haya duplicados
       asignaciones[dia] = [...new Set(asignaciones[dia])];
     });
 
     return { asignaciones, conteoAsignaciones };
   }
 
-  // Generar planilla para la semana seleccionada
   document.getElementById('generarPlanillaBtn')?.addEventListener('click', async () => {
     if (!tieneAccesoAdmin()) return;
     const select = document.getElementById('semanaSelect');
@@ -2154,46 +2484,110 @@
 
     renderPlanilla(nuevaPlanilla);
     renderHistorial();
+    renderProximosTurnos();
     renderSemanaSelect();
   });
 
+  function opcionesAgregarDia(dia, asignados) {
+    return voluntarios
+      .filter((v) => !asignados.some((n) => nombresCoinciden(n, nombreCompleto(v))))
+      .sort((a, b) => nombreCompleto(a).localeCompare(nombreCompleto(b), 'es'))
+      .map((v) => `<option value="${escapeHtml(nombreCompleto(v))}">${escapeHtml(nombreCompleto(v))}</option>`)
+      .join('');
+  }
+
   function renderPlanilla(planilla) {
     const container = document.getElementById('planillaContent');
+    if (!container) return;
+    const admin = tieneAccesoAdmin();
     if (!planilla) {
-      container.innerHTML = '<div class="empty-state">Selecciona o crea una semana para generar la planilla.</div>';
+      container.innerHTML = admin
+        ? '<div class="empty-state">Selecciona una semana y pulsa Generar planilla. Después podrás modificar quién va cada día.</div>'
+        : '<div class="empty-state">Todavía no hay un programa publicado.</div>';
       return;
     }
     const { asignaciones, etiqueta } = planilla;
     let html = `
       <div class="planilla-header">
-        <span class="periodo-badge">📆 ${etiqueta}</span>
-        <span class="badge-config">Voluntarios requeridos: ${DIAS.map(d => `${DIAS_ABREV[d]}:${planilla.configUsada[d] || 0}`).join(' · ')}</span>
+        <span class="periodo-badge">📆 ${escapeHtml(etiqueta)}</span>
+        <span class="badge-config">${admin ? 'Voluntarios requeridos' : 'Programa'}: ${DIAS.map(d => `${DIAS_ABREV[d]}:${planilla.configUsada?.[d] || 0}`).join(' · ')}</span>
       </div>
       <div class="planilla-dias">
     `;
-    DIAS.forEach(dia => {
-      const voluntariosDia = asignaciones[dia] || [];
-      const capitanesNombres = voluntarios.filter(v => v.esCapitan && v.diasCapitan?.includes(dia)).map(v => nombreCompleto(v));
+    DIAS.forEach((dia) => {
+      const voluntariosDia = asignaciones?.[dia] || [];
+      const capitanesNombres = voluntarios.filter((v) => v.esCapitan && v.diasCapitan?.includes(dia)).map((v) => nombreCompleto(v));
+      const diaMio = voluntariosDia.some((nombre) => esNombreDelDispositivo(nombre));
+      const extras = opcionesAgregarDia(dia, voluntariosDia);
       html += `
-        <div class="dia-card">
+        <div class="dia-card${diaMio ? ' dia-mio' : ''}">
           <div class="dia-header">
             <span>${dia}</span>
-            <span style="font-size:0.8rem; font-weight:500; background:white; padding:2px 10px; border-radius:30px;">${voluntariosDia.length}/${planilla.configUsada[dia] || 0}</span>
+            <span style="font-size:0.8rem; font-weight:500; background:white; padding:2px 10px; border-radius:30px;">${voluntariosDia.length}/${planilla.configUsada?.[dia] || 0}</span>
           </div>
           <div class="dia-body">
-            ${voluntariosDia.length ? voluntariosDia.map(nombre => {
-              const esCap = capitanesNombres.includes(nombre);
-              return `<div class="voluntario-item"><span>${nombre} ${esCap ? '<span class="capitan-tag">CAP</span>' : ''}</span></div>`;
+            ${voluntariosDia.length ? voluntariosDia.map((nombre, idx) => {
+              const esCap = capitanesNombres.some((n) => nombresCoinciden(n, nombre));
+              const esMio = esNombreDelDispositivo(nombre);
+              return `<div class="voluntario-item${esMio ? ' soy-yo' : ''}">
+                <span>${escapeHtml(nombre)}${esMio ? '<span class="you-badge">TÚ</span>' : ''} ${esCap ? '<span class="capitan-tag">CAP</span>' : ''}</span>
+                ${admin ? `<button type="button" class="btn-quitar-asig" data-periodo="${escapeHtml(planilla.periodo)}" data-dia="${escapeHtml(dia)}" data-idx="${idx}" title="Quitar">✕</button>` : ''}
+              </div>`;
             }).join('') : '<div class="text-muted" style="font-size:0.8rem; text-align:center; padding:8px;">Sin asignar</div>'}
+            ${admin ? `<div class="planilla-add"><select data-add-periodo="${escapeHtml(planilla.periodo)}" data-add-dia="${escapeHtml(dia)}"><option value="">+ Agregar voluntario</option>${extras}</select></div>` : ''}
           </div>
         </div>
       `;
     });
     html += `</div>`;
+    if (admin) {
+      html += '<p class="text-muted mt-4">Puedes quitar o agregar personas. Los cambios se guardan al momento.</p>';
+    }
     container.innerHTML = html;
   }
 
-  // Exportar a JPG
+  async function actualizarAsignacionDia(periodo, dia, nombres) {
+    if (!tieneAccesoAdmin()) return;
+    const planilla = planillasGuardadas.find((p) => p.periodo === periodo);
+    if (!planilla) return;
+    planilla.asignaciones = { ...(planilla.asignaciones || {}), [dia]: nombres };
+    await guardarPlanillas();
+    renderPlanilla(planilla);
+    renderHistorial();
+    renderProximosTurnos();
+  }
+
+  document.getElementById('planillaContent')?.addEventListener('click', async (event) => {
+    const btn = event.target.closest('[data-quitar-asig], .btn-quitar-asig');
+    if (!btn || !tieneAccesoAdmin()) return;
+    const periodo = btn.dataset.periodo;
+    const dia = btn.dataset.dia;
+    const idx = Number(btn.dataset.idx);
+    const planilla = planillasGuardadas.find((p) => p.periodo === periodo);
+    if (!planilla || !dia) return;
+    const lista = [...(planilla.asignaciones?.[dia] || [])];
+    if (Number.isNaN(idx) || idx < 0 || idx >= lista.length) return;
+    lista.splice(idx, 1);
+    await actualizarAsignacionDia(periodo, dia, lista);
+  });
+
+  document.getElementById('planillaContent')?.addEventListener('change', async (event) => {
+    const select = event.target.closest('select[data-add-dia]');
+    if (!select || !tieneAccesoAdmin()) return;
+    const nombre = select.value;
+    if (!nombre) return;
+    const periodo = select.dataset.addPeriodo;
+    const dia = select.dataset.addDia;
+    const planilla = planillasGuardadas.find((p) => p.periodo === periodo);
+    if (!planilla || !dia) return;
+    const lista = [...(planilla.asignaciones?.[dia] || [])];
+    if (lista.some((n) => nombresCoinciden(n, nombre))) return;
+    lista.push(nombre);
+    await actualizarAsignacionDia(periodo, dia, lista);
+  });
+
+  document.getElementById('semanaSelect')?.addEventListener('change', mostrarPlanillaSeleccionada);
+
   document.getElementById('exportarJpgBtn')?.addEventListener('click', () => {
     const planillaDiv = document.getElementById('planillaContent');
     if (!planillaDiv || planillaDiv.querySelector('.empty-state')) {
@@ -2244,7 +2638,7 @@
     const planilla = planillasGuardadas.find(p => p.periodo === periodoId);
     if (!planilla) return;
     activarPestana('planilla');
-    document.getElementById('semanaSelect').value = periodoId;
+    asegurarOpcionSemana(planilla);
     renderPlanilla(planilla);
   };
 
