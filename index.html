@@ -1004,31 +1004,22 @@
       .replace(/"/g, '&quot;');
   }
 
-  function splitNombreCompleto(full) {
-    const parts = String(full || '').trim().split(/\s+/).filter(Boolean);
-    if (!parts.length) return { nombre: '', apellido: '' };
-    if (parts.length === 1) return { nombre: parts[0], apellido: '' };
-    return { nombre: parts[0], apellido: parts.slice(1).join(' ') };
-  }
-
-  function parsearNombreYApellido(valor) {
-    const full = String(valor || '').trim().replace(/\s+/g, ' ');
-    const split = splitNombreCompleto(full);
-    return { full, nombre: split.nombre, apellido: split.apellido };
-  }
-
   function nombreCompleto(v) {
     if (!v) return '';
-    return [v.nombre, v.apellido].filter(Boolean).join(' ').trim() || String(v.nombre || '').trim();
+    const n = String(v.nombre || '').trim();
+    const a = String(v.apellido || '').trim();
+    if (!n) return a;
+    if (!a) return n;
+    if (n.toLowerCase().includes(a.toLowerCase())) return n;
+    return `${n} ${a}`.trim();
+  }
+
+  function leerNombreYApellido(valor) {
+    return String(valor || '').trim().replace(/\s+/g, ' ');
   }
 
   function normalizarVoluntario(v) {
-    const apellido = typeof v.apellido === 'string' ? v.apellido.trim() : '';
-    if (apellido || (v.nombre && !String(v.nombre).includes(' '))) {
-      return { ...v, nombre: String(v.nombre || '').trim(), apellido };
-    }
-    const split = splitNombreCompleto(v.nombre);
-    return { ...v, nombre: split.nombre, apellido: split.apellido };
+    return { ...v, nombre: nombreCompleto(v), apellido: '' };
   }
 
   function getIdentidadLocal() {
@@ -1047,8 +1038,8 @@
     }
     localStorage.setItem(CLAVE_MI_VOLUNTARIO, JSON.stringify({
       id: v.id,
-      nombre: v.nombre,
-      apellido: v.apellido || ''
+      nombre: nombreCompleto(v),
+      apellido: ''
     }));
   }
 
@@ -1078,9 +1069,11 @@
   }
 
   function inicialesDe(v) {
-    const n = (v.nombre || '').trim().charAt(0);
-    const a = (v.apellido || '').trim().charAt(0);
-    return ((n + a) || (v.nombre || '?').slice(0, 2)).toUpperCase();
+    const parts = nombreCompleto(v).split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    }
+    return (parts[0] || '?').slice(0, 2).toUpperCase();
   }
 
   function setSyncStatus(mode, detail) {
@@ -1464,13 +1457,13 @@
   async function registrarDesdeOnboarding() {
     const nombreInput = document.getElementById('onboardingNombreInput');
     const error = document.getElementById('onboardingVoluntarioError');
-    const { nombre, apellido } = parsearNombreYApellido(nombreInput?.value);
+    const nombre = leerNombreYApellido(nombreInput?.value);
     const showError = (msg) => {
       if (!error) return;
       error.hidden = false;
       error.textContent = msg;
     };
-    if (!nombre || !apellido) {
+    if (nombre.split(/\s+/).filter(Boolean).length < 2) {
       showError('Escribe tu nombre y apellido.');
       nombreInput?.focus();
       return;
@@ -1478,7 +1471,7 @@
     const nuevo = {
       id: crypto.randomUUID(),
       nombre,
-      apellido,
+      apellido: '',
       dias: [],
       esCapitan: false,
       diasCapitan: []
@@ -1804,14 +1797,14 @@
   async function guardarRegistroFormulario() {
     const nombreInput = document.getElementById('registroNombreInput');
     const error = document.getElementById('registroError');
-    const { nombre, apellido } = parsearNombreYApellido(nombreInput?.value);
+    const nombre = leerNombreYApellido(nombreInput?.value);
     const admin = tieneAccesoAdmin();
     const showError = (msg) => {
       if (!error) return;
       error.hidden = false;
       error.textContent = msg;
     };
-    if (!nombre || !apellido) {
+    if (nombre.split(/\s+/).filter(Boolean).length < 2) {
       showError('Escribe el nombre y apellido.');
       nombreInput?.focus();
       return;
@@ -1823,7 +1816,7 @@
         showError('No puedes modificar este registro.');
         return;
       }
-      voluntarios[idx] = { ...voluntarios[idx], nombre, apellido };
+      voluntarios[idx] = { ...voluntarios[idx], nombre, apellido: '' };
       if (esMiVoluntario(voluntarios[idx])) setIdentidadLocal(voluntarios[idx]);
       await guardarVoluntarios();
       cerrarModalRegistro();
@@ -1839,7 +1832,7 @@
     const nuevo = {
       id: crypto.randomUUID(),
       nombre,
-      apellido,
+      apellido: '',
       dias: [],
       esCapitan: false,
       diasCapitan: []

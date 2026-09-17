@@ -128,14 +128,20 @@
       try {
         return await fn();
       } finally {
-        setTimeout(() => { this.skipRealtime = false; }, 800);
+        setTimeout(() => { this.skipRealtime = false; }, 1500);
       }
     },
 
     mapVoluntarioFromRow(row) {
+      const nombre = String(row.nombre || '').trim();
+      const apellido = String(row.apellido || '').trim();
+      const fullName = (apellido && !nombre.toLowerCase().includes(apellido.toLowerCase()))
+        ? `${nombre} ${apellido}`.trim()
+        : nombre;
       return {
         id: row.id,
-        nombre: row.nombre,
+        nombre: fullName,
+        apellido: '',
         dias: row.dias || [],
         esCapitan: !!row.es_capitan,
         diasCapitan: row.dias_capitan || []
@@ -143,9 +149,14 @@
     },
 
     mapVoluntarioToRow(v) {
+      const nombre = String(v.nombre || '').trim();
+      const apellido = String(v.apellido || '').trim();
+      const fullName = (apellido && !nombre.toLowerCase().includes(apellido.toLowerCase()))
+        ? `${nombre} ${apellido}`.trim()
+        : nombre;
       return {
         id: v.id,
-        nombre: v.nombre,
+        nombre: fullName,
         dias: v.dias || [],
         es_capitan: !!v.esCapitan,
         dias_capitan: v.diasCapitan || [],
@@ -233,7 +244,10 @@
           if (error) throw new Error(error.message);
         }
         if (voluntarios.length) {
-          const { error } = await this.client.from('voluntarios').upsert(voluntarios.map((v) => this.mapVoluntarioToRow(v)));
+          const { error } = await this.client.from('voluntarios').upsert(
+            voluntarios.map((v) => this.mapVoluntarioToRow(v)),
+            { onConflict: 'id' }
+          );
           if (error) throw new Error(error.message);
         }
       });
