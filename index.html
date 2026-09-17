@@ -927,7 +927,7 @@
       <div class="role-choices">
         <button type="button" class="role-choice" id="elegirVoluntarioBtn">
           <strong>Soy voluntario</strong>
-          <span>Regístrate o elige tu nombre. Solo podrás modificar tus datos y tus días.</span>
+          <span>Elige tu nombre o agrega uno nuevo. Solo podrás modificar tus datos y tus días.</span>
         </button>
         <button type="button" class="role-choice" id="elegirAdminBtn">
           <strong>Soy administrador</strong>
@@ -941,7 +941,7 @@
 
     <div id="onboardingPasoVoluntario" hidden>
       <h2>Identifícate</h2>
-      <p>Si ya estás en la lista, selecciona tu nombre. Si no, regístrate.</p>
+      <p>Si ya estás en la lista, selecciona tu nombre. Si no, escribe uno nuevo. Luego pulsa ENTRAR.</p>
       <div id="onboardingSelectWrap">
         <div class="field">
           <label for="onboardingSelectVoluntario">Ya estoy registrado</label>
@@ -949,9 +949,8 @@
             <option value="">— Elige tu nombre —</option>
           </select>
         </div>
-        <button type="button" class="btn" id="onboardingUsarNombreBtn" style="width:100%;justify-content:center;">Usar este nombre</button>
       </div>
-      <div class="or-divider">o registrarme</div>
+      <div class="or-divider">o agrega un nombre nuevo</div>
       <div class="field">
         <label for="onboardingNombreInput">Nombre y apellido</label>
         <input id="onboardingNombreInput" type="text" autocomplete="name" maxlength="140" placeholder="Ej. Ana Pérez">
@@ -959,7 +958,7 @@
       <p id="onboardingVoluntarioError" class="modal-error" hidden></p>
       <div class="modal-actions">
         <button type="button" class="btn btn-outline" id="onboardingVolverVoluntarioBtn">Volver</button>
-        <button type="button" class="btn" id="onboardingRegistrarBtn">Registrarme</button>
+        <button type="button" class="btn" id="onboardingEntrarBtn">ENTRAR</button>
       </div>
     </div>
 
@@ -1313,14 +1312,14 @@
   function rellenarSelectVoluntarios() {
     const select = document.getElementById('onboardingSelectVoluntario');
     const wrap = document.getElementById('onboardingSelectWrap');
-    const usarBtn = document.getElementById('onboardingUsarNombreBtn');
+    const nombreInput = document.getElementById('onboardingNombreInput');
     if (!select) return;
     const idActual = getMiVoluntarioId();
     const lista = [...voluntarios].sort((a, b) => nombreCompleto(a).localeCompare(nombreCompleto(b), 'es'));
     select.innerHTML = '<option value="">— Elige tu nombre —</option>' +
       lista.map((v) => `<option value="${escapeHtml(v.id)}"${v.id === idActual ? ' selected' : ''}>${escapeHtml(nombreCompleto(v))}</option>`).join('');
     if (wrap) wrap.hidden = lista.length === 0;
-    if (usarBtn) usarBtn.hidden = lista.length === 0;
+    if (nombreInput) nombreInput.value = '';
   }
 
   function mostrarPasoOnboarding(paso) {
@@ -1437,36 +1436,32 @@
     }
   }
 
+  function mostrarErrorVoluntarioOnboarding(msg) {
+    const error = document.getElementById('onboardingVoluntarioError');
+    if (!error) return;
+    error.hidden = false;
+    error.textContent = msg;
+  }
+
   function usarNombreSeleccionado() {
     const select = document.getElementById('onboardingSelectVoluntario');
-    const error = document.getElementById('onboardingVoluntarioError');
-    const showError = (msg) => {
-      if (!error) return;
-      error.hidden = false;
-      error.textContent = msg;
-    };
     const id = select?.value || '';
     const v = voluntarios.find((item) => item.id === id);
     if (!v) {
-      showError('Selecciona tu nombre de la lista.');
-      return;
+      mostrarErrorVoluntarioOnboarding('Selecciona tu nombre de la lista o escribe uno nuevo.');
+      return false;
     }
     finalizarOnboardingVoluntario(v);
+    return true;
   }
 
   async function registrarDesdeOnboarding() {
     const nombreInput = document.getElementById('onboardingNombreInput');
-    const error = document.getElementById('onboardingVoluntarioError');
     const nombre = leerNombreYApellido(nombreInput?.value);
-    const showError = (msg) => {
-      if (!error) return;
-      error.hidden = false;
-      error.textContent = msg;
-    };
     if (nombre.split(/\s+/).filter(Boolean).length < 2) {
-      showError('Escribe tu nombre y apellido.');
+      mostrarErrorVoluntarioOnboarding('Escribe tu nombre y apellido.');
       nombreInput?.focus();
-      return;
+      return false;
     }
     const nuevo = {
       id: crypto.randomUUID(),
@@ -1479,12 +1474,53 @@
     voluntarios.push(nuevo);
     await guardarVoluntarios();
     finalizarOnboardingVoluntario(nuevo);
+    return true;
+  }
+
+  async function entrarComoVoluntario() {
+    const select = document.getElementById('onboardingSelectVoluntario');
+    const nombreInput = document.getElementById('onboardingNombreInput');
+    const nombreNuevo = leerNombreYApellido(nombreInput?.value);
+    const idSeleccionado = select?.value || '';
+    const error = document.getElementById('onboardingVoluntarioError');
+    if (error) {
+      error.hidden = true;
+      error.textContent = '';
+    }
+    if (nombreNuevo) {
+      await registrarDesdeOnboarding();
+      return;
+    }
+    if (idSeleccionado) {
+      usarNombreSeleccionado();
+      return;
+    }
+    mostrarErrorVoluntarioOnboarding('Selecciona tu nombre de la lista o escribe uno nuevo.');
   }
 
   document.getElementById('elegirVoluntarioBtn')?.addEventListener('click', elegirRolVoluntario);
   document.getElementById('elegirAdminBtn')?.addEventListener('click', elegirRolAdmin);
-  document.getElementById('onboardingUsarNombreBtn')?.addEventListener('click', usarNombreSeleccionado);
-  document.getElementById('onboardingRegistrarBtn')?.addEventListener('click', () => { registrarDesdeOnboarding(); });
+  document.getElementById('onboardingEntrarBtn')?.addEventListener('click', () => { entrarComoVoluntario(); });
+  document.getElementById('onboardingSelectVoluntario')?.addEventListener('change', () => {
+    const nombreInput = document.getElementById('onboardingNombreInput');
+    if (nombreInput) nombreInput.value = '';
+    const error = document.getElementById('onboardingVoluntarioError');
+    if (error) {
+      error.hidden = true;
+      error.textContent = '';
+    }
+  });
+  document.getElementById('onboardingNombreInput')?.addEventListener('input', () => {
+    const select = document.getElementById('onboardingSelectVoluntario');
+    if (select && leerNombreYApellido(document.getElementById('onboardingNombreInput')?.value)) {
+      select.value = '';
+    }
+    const error = document.getElementById('onboardingVoluntarioError');
+    if (error) {
+      error.hidden = true;
+      error.textContent = '';
+    }
+  });
   document.getElementById('onboardingConfirmarAdminBtn')?.addEventListener('click', confirmarCodigoAdmin);
   document.getElementById('onboardingVolverVoluntarioBtn')?.addEventListener('click', () => mostrarPasoOnboarding('rol'));
   document.getElementById('onboardingVolverAdminBtn')?.addEventListener('click', () => mostrarPasoOnboarding('rol'));
@@ -1503,7 +1539,7 @@
   document.getElementById('onboardingNombreInput')?.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
       event.preventDefault();
-      registrarDesdeOnboarding();
+      entrarComoVoluntario();
     }
   });
   document.getElementById('onboardingModal')?.addEventListener('click', (event) => {
