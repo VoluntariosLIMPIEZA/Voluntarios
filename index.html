@@ -1025,6 +1025,84 @@
     return String(valor || '').trim().replace(/\s+/g, ' ');
   }
 
+  function quitarAcentos(texto) {
+    return String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function normalizarNombreComparacion(nombre) {
+    return quitarAcentos(nombre)
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function plegarLetrasConfusas(nombre) {
+    return String(nombre || '').replace(/[csz]/g, 's');
+  }
+
+  function distanciaLevenshtein(a, b) {
+    const s = String(a || '');
+    const t = String(b || '');
+    if (s === t) return 0;
+    if (!s.length) return t.length;
+    if (!t.length) return s.length;
+    const filas = Array.from({ length: s.length + 1 }, (_, i) => i);
+    for (let j = 1; j <= t.length; j += 1) {
+      let prev = filas[0];
+      filas[0] = j;
+      for (let i = 1; i <= s.length; i += 1) {
+        const actual = filas[i];
+        const costo = s[i - 1] === t[j - 1] ? 0 : 1;
+        filas[i] = Math.min(filas[i] + 1, filas[i - 1] + 1, prev + costo);
+        prev = actual;
+      }
+    }
+    return filas[s.length];
+  }
+
+  function similitudTextos(a, b) {
+    const s = String(a || '');
+    const t = String(b || '');
+    if (!s && !t) return 1;
+    if (!s || !t) return 0;
+    if (s === t) return 1;
+    const maxLen = Math.max(s.length, t.length);
+    return 1 - (distanciaLevenshtein(s, t) / maxLen);
+  }
+
+  function similitudNombresPersonas(nombreA, nombreB) {
+    const normalA = normalizarNombreComparacion(nombreA);
+    const normalB = normalizarNombreComparacion(nombreB);
+    if (!normalA || !normalB) return 0;
+    const plegadoA = plegarLetrasConfusas(normalA);
+    const plegadoB = plegarLetrasConfusas(normalB);
+    if (normalA === normalB || plegadoA === plegadoB) return 1;
+    const score = Math.max(similitudTextos(normalA, normalB), similitudTextos(plegadoA, plegadoB));
+    const primeroA = plegadoA.split(' ')[0] || '';
+    const primeroB = plegadoB.split(' ')[0] || '';
+    const similitudNombre = similitudTextos(primeroA, primeroB);
+    if (score >= 0.9 && similitudNombre >= 0.85) return score;
+    return Math.min(score, similitudNombre);
+  }
+
+  function encontrarVoluntarioSimilar(nombreIngresado, { excluirId } = {}) {
+    const nombre = leerNombreYApellido(nombreIngresado);
+    if (!nombre) return null;
+    let mejor = null;
+    let mejorScore = 0;
+    for (const v of voluntarios) {
+      if (excluirId && v.id === excluirId) continue;
+      const score = similitudNombresPersonas(nombre, nombreCompleto(v));
+      if (score > mejorScore) {
+        mejorScore = score;
+        mejor = v;
+      }
+    }
+    if (mejor && mejorScore >= 0.9) return mejor;
+    return null;
+  }
+
   function normalizarVoluntario(v) {
     return { ...v, nombre: nombreCompleto(v), apellido: '' };
   }
@@ -1483,6 +1561,14 @@
       nombreInput?.focus();
       return false;
     }
+    const similar = encontrarVoluntarioSimilar(nombre);
+    if (similar) {
+      const select = document.getElementById('onboardingSelectVoluntario');
+      if (select) select.value = similar.id;
+      actualizarCampoNombreOnboarding();
+      mostrarErrorVoluntarioOnboarding(`Ese nombre ya está registrado como ${nombreCompleto(similar)}. Por favor elige tu nombre de la lista.`);
+      return false;
+    }
     const nuevo = {
       id: crypto.randomUUID(),
       nombre,
@@ -1881,6 +1967,13 @@
 
     if (!admin && getMiVoluntarioId() && voluntarios.some(v => v.id === getMiVoluntarioId())) {
       showError('Este dispositivo ya tiene un voluntario registrado.');
+      return;
+    }
+
+    const similar = encontrarVoluntarioSimilar(nombre);
+    if (similar) {
+      showError(`Ese nombre ya está registrado como ${nombreCompleto(similar)}. Por favor elige tu nombre de la lista.`);
+      nombreInput?.focus();
       return;
     }
 
