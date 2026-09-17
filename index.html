@@ -908,12 +908,8 @@
     <h3 id="registroTitulo">Registrarse como voluntario</h3>
     <p id="registroDescripcion">Indica tu nombre y apellido. Quedarán vinculados a este dispositivo.</p>
     <div class="field">
-      <label for="registroNombreInput">Nombre</label>
-      <input id="registroNombreInput" type="text" autocomplete="given-name" maxlength="60" placeholder="Ej. Ana">
-    </div>
-    <div class="field">
-      <label for="registroApellidoInput">Apellido</label>
-      <input id="registroApellidoInput" type="text" autocomplete="family-name" maxlength="80" placeholder="Ej. Pérez">
+      <label for="registroNombreInput">Nombre y apellido</label>
+      <input id="registroNombreInput" type="text" autocomplete="name" maxlength="140" placeholder="Ej. Ana Pérez">
     </div>
     <p id="registroError" class="modal-error" hidden></p>
     <div class="modal-actions">
@@ -957,12 +953,8 @@
       </div>
       <div class="or-divider">o registrarme</div>
       <div class="field">
-        <label for="onboardingNombreInput">Nombre</label>
-        <input id="onboardingNombreInput" type="text" autocomplete="given-name" maxlength="60" placeholder="Ej. Ana">
-      </div>
-      <div class="field">
-        <label for="onboardingApellidoInput">Apellido</label>
-        <input id="onboardingApellidoInput" type="text" autocomplete="family-name" maxlength="80" placeholder="Ej. Pérez">
+        <label for="onboardingNombreInput">Nombre y apellido</label>
+        <input id="onboardingNombreInput" type="text" autocomplete="name" maxlength="140" placeholder="Ej. Ana Pérez">
       </div>
       <p id="onboardingVoluntarioError" class="modal-error" hidden></p>
       <div class="modal-actions">
@@ -1017,6 +1009,12 @@
     if (!parts.length) return { nombre: '', apellido: '' };
     if (parts.length === 1) return { nombre: parts[0], apellido: '' };
     return { nombre: parts[0], apellido: parts.slice(1).join(' ') };
+  }
+
+  function parsearNombreYApellido(valor) {
+    const full = String(valor || '').trim().replace(/\s+/g, ' ');
+    const split = splitNombreCompleto(full);
+    return { full, nombre: split.nombre, apellido: split.apellido };
   }
 
   function nombreCompleto(v) {
@@ -1465,23 +1463,16 @@
 
   async function registrarDesdeOnboarding() {
     const nombreInput = document.getElementById('onboardingNombreInput');
-    const apellidoInput = document.getElementById('onboardingApellidoInput');
     const error = document.getElementById('onboardingVoluntarioError');
-    const nombre = (nombreInput?.value || '').trim();
-    const apellido = (apellidoInput?.value || '').trim();
+    const { nombre, apellido } = parsearNombreYApellido(nombreInput?.value);
     const showError = (msg) => {
       if (!error) return;
       error.hidden = false;
       error.textContent = msg;
     };
-    if (!nombre) {
-      showError('El nombre es obligatorio.');
+    if (!nombre || !apellido) {
+      showError('Escribe tu nombre y apellido.');
       nombreInput?.focus();
-      return;
-    }
-    if (!apellido) {
-      showError('El apellido es obligatorio.');
-      apellidoInput?.focus();
       return;
     }
     const nuevo = {
@@ -1516,13 +1507,11 @@
       confirmarCodigoAdmin();
     }
   });
-  ['onboardingNombreInput', 'onboardingApellidoInput'].forEach((id) => {
-    document.getElementById(id)?.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        registrarDesdeOnboarding();
-      }
-    });
+  document.getElementById('onboardingNombreInput')?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      registrarDesdeOnboarding();
+    }
   });
   document.getElementById('onboardingModal')?.addEventListener('click', (event) => {
     if (event.target.id === 'onboardingModal' && !onboardingForzoso) cerrarOnboarding();
@@ -1769,7 +1758,6 @@
     const titulo = document.getElementById('registroTitulo');
     const desc = document.getElementById('registroDescripcion');
     const nombreInput = document.getElementById('registroNombreInput');
-    const apellidoInput = document.getElementById('registroApellidoInput');
     const error = document.getElementById('registroError');
     const guardarBtn = document.getElementById('registroGuardarBtn');
     const admin = tieneAccesoAdmin();
@@ -1802,8 +1790,7 @@
       if (desc) desc.textContent = 'Indica tu nombre y apellido. Quedarán vinculados a este dispositivo.';
       if (guardarBtn) guardarBtn.textContent = 'Registrarme';
     }
-    if (nombreInput) nombreInput.value = actual ? actual.nombre : '';
-    if (apellidoInput) apellidoInput.value = actual ? (actual.apellido || '') : '';
+    if (nombreInput) nombreInput.value = actual ? nombreCompleto(actual) : '';
     if (modal) modal.hidden = false;
     setTimeout(() => nombreInput?.focus(), 50);
   }
@@ -1816,24 +1803,17 @@
 
   async function guardarRegistroFormulario() {
     const nombreInput = document.getElementById('registroNombreInput');
-    const apellidoInput = document.getElementById('registroApellidoInput');
     const error = document.getElementById('registroError');
-    const nombre = (nombreInput?.value || '').trim();
-    const apellido = (apellidoInput?.value || '').trim();
+    const { nombre, apellido } = parsearNombreYApellido(nombreInput?.value);
     const admin = tieneAccesoAdmin();
     const showError = (msg) => {
       if (!error) return;
       error.hidden = false;
       error.textContent = msg;
     };
-    if (!nombre) {
-      showError('El nombre es obligatorio.');
+    if (!nombre || !apellido) {
+      showError('Escribe el nombre y apellido.');
       nombreInput?.focus();
-      return;
-    }
-    if (!apellido) {
-      showError('El apellido es obligatorio.');
-      apellidoInput?.focus();
       return;
     }
 
@@ -1877,13 +1857,11 @@
   document.getElementById('editarMiRegistroBtn')?.addEventListener('click', () => abrirModalRegistro({ editar: true }));
   document.getElementById('registroCancelarBtn')?.addEventListener('click', cerrarModalRegistro);
   document.getElementById('registroGuardarBtn')?.addEventListener('click', () => { guardarRegistroFormulario(); });
-  ['registroNombreInput', 'registroApellidoInput'].forEach((id) => {
-    document.getElementById(id)?.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        guardarRegistroFormulario();
-      }
-    });
+  document.getElementById('registroNombreInput')?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      guardarRegistroFormulario();
+    }
   });
   document.getElementById('registroModal')?.addEventListener('click', (event) => {
     if (event.target.id === 'registroModal') cerrarModalRegistro();
