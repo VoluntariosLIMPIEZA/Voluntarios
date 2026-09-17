@@ -2262,31 +2262,8 @@
     const miNombre = nombreDelDispositivo();
 
     if (admin) {
-      if (!voluntarios.length) {
-        card.hidden = true;
-        card.innerHTML = '';
-        return;
-      }
-      const items = [...voluntarios]
-        .sort((a, b) => nombreCompleto(a).localeCompare(nombreCompleto(b), 'es'))
-        .map((v) => {
-          const nombre = nombreCompleto(v);
-          const turno = getTurnoAvisoDe(nombre);
-          const texto = !turno
-            ? 'Sin turno asignado'
-            : (turno.estado === 'pasado' ? `Fue ${formatearTurno(turno)}` : formatearTurno(turno));
-          return `<div class="turno-lista-item">
-            <strong>${escapeHtml(nombre)}</strong>
-            <span class="${turno && turno.estado !== 'pasado' ? '' : 'sin-turno'}">${escapeHtml(texto)}</span>
-          </div>`;
-        }).join('');
-      card.classList.remove('vacio');
-      card.hidden = false;
-      card.innerHTML = `
-        <div class="turno-aviso-kicker">Próximos turnos</div>
-        <div class="turno-aviso-fecha">Aviso de cada voluntario</div>
-        <p>Cuándo le toca a cada persona, según la planilla publicada.</p>
-        <div class="turno-lista">${items}</div>`;
+      card.hidden = true;
+      card.innerHTML = '';
       return;
     }
 
