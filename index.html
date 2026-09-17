@@ -611,6 +611,14 @@
       border-color: #3b82f6;
       box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
     }
+    .field input:disabled {
+      background: #f1f5f9;
+      color: #94a3b8;
+      cursor: not-allowed;
+    }
+    .field.is-disabled label {
+      color: #94a3b8;
+    }
     .loading-overlay {
       position: fixed;
       inset: 0;
@@ -951,7 +959,7 @@
         </div>
       </div>
       <div class="or-divider">o agrega un nombre nuevo</div>
-      <div class="field">
+      <div class="field" id="onboardingNombreField">
         <label for="onboardingNombreInput">Nombre y apellido</label>
         <input id="onboardingNombreInput" type="text" autocomplete="name" maxlength="140" placeholder="Ej. Ana Pérez">
       </div>
@@ -1320,6 +1328,18 @@
       lista.map((v) => `<option value="${escapeHtml(v.id)}"${v.id === idActual ? ' selected' : ''}>${escapeHtml(nombreCompleto(v))}</option>`).join('');
     if (wrap) wrap.hidden = lista.length === 0;
     if (nombreInput) nombreInput.value = '';
+    actualizarCampoNombreOnboarding();
+  }
+
+  function actualizarCampoNombreOnboarding() {
+    const select = document.getElementById('onboardingSelectVoluntario');
+    const nombreInput = document.getElementById('onboardingNombreInput');
+    const campo = document.getElementById('onboardingNombreField');
+    if (!nombreInput) return;
+    const hayNombreLista = Boolean(select?.value);
+    nombreInput.disabled = hayNombreLista;
+    if (hayNombreLista) nombreInput.value = '';
+    if (campo) campo.classList.toggle('is-disabled', hayNombreLista);
   }
 
   function mostrarPasoOnboarding(paso) {
@@ -1502,8 +1522,7 @@
   document.getElementById('elegirAdminBtn')?.addEventListener('click', elegirRolAdmin);
   document.getElementById('onboardingEntrarBtn')?.addEventListener('click', () => { entrarComoVoluntario(); });
   document.getElementById('onboardingSelectVoluntario')?.addEventListener('change', () => {
-    const nombreInput = document.getElementById('onboardingNombreInput');
-    if (nombreInput) nombreInput.value = '';
+    actualizarCampoNombreOnboarding();
     const error = document.getElementById('onboardingVoluntarioError');
     if (error) {
       error.hidden = true;
