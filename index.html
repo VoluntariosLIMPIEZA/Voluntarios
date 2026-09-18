@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Organiza los turnos semanales de voluntarios de limpieza, capitanes y exporta la planilla.">
-  <meta name="theme-color" content="#3b82f6">
+  <meta name="theme-color" content="#eef1f6">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Voluntarios">
   <meta name="application-name" content="Voluntarios">
-  <meta name="msapplication-TileColor" content="#3b82f6">
+  <meta name="msapplication-TileColor" content="#0f172a">
   <meta name="msapplication-TileImage" content="icons/icon-192.png">
   <title>Voluntarios de Limpieza</title>
   <link rel="manifest" href="manifest.webmanifest">
@@ -24,73 +24,106 @@
   <script src="js/supabase-config.js"></script>
   <script src="js/db.js"></script>
   <style>
+    :root {
+      --bg: #eef1f6;
+      --surface: #ffffff;
+      --surface-muted: #f7f8fb;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --text-soft: #94a3b8;
+      --border: #e6ebf2;
+      --border-strong: #d5dce6;
+      --navy: #0f172a;
+      --navy-hover: #1e293b;
+      --blue: #3b82f6;
+      --blue-soft: #eff6ff;
+      --cap: #f59e0b;
+      --cap-text: #92400e;
+      --ok-bg: #e8f7ee;
+      --ok-text: #166534;
+      --warn-bg: #fff6e0;
+      --warn-text: #92400e;
+      --err-bg: #fef2f2;
+      --err-text: #b91c1c;
+      --admin-bg: #fff4d6;
+      --admin-text: #8a5a12;
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-pill: 999px;
+      --shadow: 0 18px 40px -24px rgba(15, 23, 42, 0.22);
+      --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
     body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: #eef2f7;
-      color: #1e293b;
-      padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+      font-family: var(--font);
+      font-feature-settings: 'cv02', 'cv03', 'cv04', 'ss01';
+      background: var(--bg);
+      color: var(--text);
+      padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
       min-height: 100vh;
       min-height: 100dvh;
       display: flex;
       flex-direction: column;
       align-items: center;
+      -webkit-font-smoothing: antialiased;
     }
     .app-container {
-      max-width: 1400px;
+      max-width: 880px;
       width: 100%;
-      background: #ffffff;
-      border-radius: 20px;
-      box-shadow: 0 12px 40px -16px rgba(15, 23, 42, 0.18);
-      border: 1px solid #e2e8f0;
-      padding: 32px 36px;
-      transition: all 0.2s;
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 28px 28px 32px;
     }
     .brand {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 14px;
     }
     .brand-mark {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      background: #0f172a;
-      color: #fff;
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: #eef2f7;
+      color: #334155;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      font-size: 0.8rem;
       flex-shrink: 0;
     }
+    .brand-mark svg {
+      width: 22px;
+      height: 22px;
+    }
     h1 {
-      font-size: 1.55rem;
+      font-size: 1.42rem;
       font-weight: 700;
-      letter-spacing: -0.03em;
-      color: #0f172a;
+      letter-spacing: -0.035em;
+      color: var(--text);
       margin: 0;
       line-height: 1.2;
     }
     .subtitle {
-      color: #64748b;
-      font-size: 0.88rem;
-      font-weight: 500;
-      margin-top: 2px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 400;
+      margin-top: 3px;
+      letter-spacing: -0.01em;
     }
     .tabs {
       display: flex;
-      gap: 8px;
-      margin-bottom: 32px;
+      gap: 4px;
+      margin: 8px 0 24px;
       flex-wrap: wrap;
       align-items: center;
-      border-bottom: 2px solid #e2e8f0;
-      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0;
     }
     .tab-dropdown {
       position: relative;
@@ -101,10 +134,10 @@
       top: calc(100% + 8px);
       right: 0;
       min-width: 220px;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: 16px;
-      box-shadow: 0 16px 32px -12px rgba(15, 23, 42, 0.22);
+      box-shadow: 0 16px 32px -12px rgba(15, 23, 42, 0.18);
       padding: 8px;
       z-index: 80;
     }
@@ -113,11 +146,11 @@
       width: 100%;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       background: transparent;
       border: none;
-      font-family: 'Inter', sans-serif;
-      font-weight: 600;
+      font-family: var(--font);
+      font-weight: 500;
       font-size: 0.9rem;
       color: #334155;
       padding: 10px 12px;
@@ -125,67 +158,111 @@
       cursor: pointer;
       text-align: left;
     }
-    .tab-dropdown-item:hover { background: #f1f5f9; }
-    .tab-dropdown-item.active { background: #eff6ff; color: #1d4ed8; }
-    .tab-dropdown-item i { font-style: normal; }
+    .tab-dropdown-item:hover { background: var(--surface-muted); }
+    .tab-dropdown-item.active { background: var(--surface-muted); color: var(--text); }
+    .tab-dropdown-item svg,
+    .tab-dropdown-item i { width: 16px; height: 16px; flex-shrink: 0; font-style: normal; }
     .tab-btn {
       background: transparent;
       border: none;
-      font-family: 'Inter', sans-serif;
-      font-weight: 600;
-      font-size: 0.95rem;
-      padding: 10px 20px;
-      border-radius: 40px;
+      font-family: var(--font);
+      font-weight: 500;
+      font-size: 0.92rem;
+      padding: 12px 14px 14px;
+      border-radius: 0;
       cursor: pointer;
-      color: #64748b;
-      transition: all 0.15s;
+      color: var(--text-muted);
+      transition: color 0.15s;
       display: flex;
       align-items: center;
       gap: 8px;
+      position: relative;
+      box-shadow: none;
     }
-    .tab-btn i { font-style: normal; font-size: 1.2rem; }
-    .tab-btn:hover { background: #f1f5f9; color: #1e293b; }
+    .tab-btn svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+    .tab-btn i { font-style: normal; font-size: 1rem; }
+    .tab-btn:hover { background: transparent; color: var(--text); }
     .tab-btn.active {
-      background: #3b82f6;
-      color: white;
-      box-shadow: 0 8px 16px -4px rgba(59, 130, 246, 0.3);
+      background: transparent;
+      color: var(--text);
+      font-weight: 600;
+      box-shadow: none;
+    }
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: -1px;
+      height: 2px;
+      background: var(--navy);
+      border-radius: 2px 2px 0 0;
+    }
+    #menuConfigBtn {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      justify-content: center;
+      border-radius: 12px;
+      color: var(--text-muted);
+    }
+    #menuConfigBtn.active::after { display: none; }
+    #menuConfigBtn.active,
+    #menuConfigBtn[aria-expanded="true"] {
+      background: var(--surface-muted);
+      color: var(--text);
     }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    /* Estilos generales */
     .card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 16px;
-      padding: 24px;
-      margin-bottom: 20px;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px 22px 20px;
+      margin-bottom: 16px;
+      box-shadow: none;
     }
     .card-title {
       font-weight: 600;
-      font-size: 1.05rem;
-      margin-bottom: 18px;
+      font-size: 0.78rem;
+      margin-bottom: 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 12px;
-      color: #0f172a;
-      letter-spacing: -0.01em;
+      color: var(--text);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
     }
     .card-title .count-pill {
-      font-size: 0.75rem;
+      font-size: inherit;
+      font-weight: inherit;
+      color: inherit;
+      background: transparent;
+      padding: 0;
+      letter-spacing: inherit;
+      text-transform: none;
+    }
+    .card-title .btn {
+      text-transform: none;
+      letter-spacing: 0;
       font-weight: 600;
-      color: #475569;
-      background: #f1f5f9;
-      padding: 4px 10px;
-      border-radius: 999px;
     }
     .card-title-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 4px;
       flex-wrap: wrap;
+      letter-spacing: 0.04em;
+    }
+    .card-title .count-wrap,
+    .card-title .count-pill {
+      letter-spacing: 0;
     }
     .filtro-dropdown {
       position: relative;
@@ -196,95 +273,104 @@
     }
     .filtro-dropdown .tab-dropdown-item {
       justify-content: space-between;
+      text-transform: none;
+      letter-spacing: 0;
     }
     .filtro-dropdown .tab-dropdown-item.active {
-      background: #eff6ff;
-      color: #1d4ed8;
+      background: var(--surface-muted);
+      color: var(--text);
     }
     .filtro-dia-count {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #64748b;
-      background: #f1f5f9;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--surface-muted);
       padding: 2px 8px;
-      border-radius: 999px;
+      border-radius: var(--radius-pill);
     }
     .filtro-dropdown .tab-dropdown-item.active .filtro-dia-count {
-      background: #dbeafe;
-      color: #1d4ed8;
+      background: #e8edf4;
+      color: var(--text);
+    }
+    #filtroVoluntariosBtn {
+      gap: 6px;
+    }
+    #filtroVoluntariosBtn svg {
+      width: 14px;
+      height: 14px;
     }
     #filtroVoluntariosBtn.is-active {
-      background: #eff6ff;
-      border-color: #93c5fd;
-      color: #1d4ed8;
+      background: var(--surface-muted);
+      border-color: var(--border-strong);
+      color: var(--text);
     }
     .btn {
-      font-family: 'Inter', sans-serif;
+      font-family: var(--font);
       font-weight: 600;
-      font-size: 0.9rem;
-      padding: 10px 20px;
-      border-radius: 40px;
+      font-size: 0.88rem;
+      padding: 10px 18px;
+      border-radius: var(--radius-pill);
       border: none;
-      background: #3b82f6;
+      background: var(--navy);
       color: white;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      transition: all 0.15s;
-      box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+      transition: background 0.15s, transform 0.15s;
+      box-shadow: none;
     }
-    .btn:hover { background: #2563eb; transform: translateY(-1px); }
+    .btn:hover { background: var(--navy-hover); transform: none; }
     .btn-outline {
       background: white;
-      border: 1.5px solid #cbd5e1;
+      border: 1px solid var(--border-strong);
       color: #334155;
       box-shadow: none;
     }
-    .btn-outline:hover { background: #f8fafc; border-color: #94a3b8; }
+    .btn-outline:hover { background: var(--surface-muted); border-color: #c5ceda; }
     .btn-danger {
-      background: #ef4444;
-      box-shadow: 0 4px 8px rgba(239, 68, 68, 0.2);
+      background: #dc2626;
+      box-shadow: none;
     }
-    .btn-danger:hover { background: #dc2626; }
-    .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
-    .btn-icon { padding: 8px 12px; border-radius: 40px; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-sm { padding: 7px 14px; font-size: 0.8rem; }
+    .btn-icon { padding: 8px 12px; border-radius: var(--radius-pill); }
     .btn-register {
       width: 100%;
       justify-content: center;
-      border-radius: 12px;
+      border-radius: var(--radius-pill);
       padding: 14px 20px;
-      letter-spacing: 0.08em;
-      font-size: 0.82rem;
+      letter-spacing: 0.06em;
+      font-size: 0.78rem;
       font-weight: 700;
-      background: #0f172a;
-      box-shadow: 0 8px 20px -8px rgba(15, 23, 42, 0.45);
+      background: var(--navy);
+      box-shadow: none;
     }
-    .btn-register:hover { background: #1e293b; }
+    .btn-register:hover { background: var(--navy-hover); }
     .register-panel {
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+      gap: 18px;
+      background: var(--surface);
     }
     .register-panel .eyebrow {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 700;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: #64748b;
-      margin-bottom: 6px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
     }
     .register-panel h2 {
-      font-size: 1.15rem;
+      font-size: 1.28rem;
       font-weight: 700;
-      color: #0f172a;
-      letter-spacing: -0.02em;
-      margin-bottom: 6px;
+      color: var(--text);
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
     }
     .register-panel p {
-      color: #64748b;
-      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-size: 0.92rem;
       line-height: 1.5;
     }
     .me-banner {
@@ -293,172 +379,281 @@
       align-items: center;
       gap: 16px;
       flex-wrap: wrap;
-      border-left: 4px solid #1d4ed8;
-      background: #f8fafc;
+      border-left: none;
+      background: var(--surface-muted);
     }
-    .me-banner strong { color: #0f172a; }
-    .you-badge {
-      display: inline-flex;
+    .me-banner strong { color: var(--text); font-size: 1.05rem; }
+    .me-banner-actions {
+      display: flex;
       align-items: center;
-      background: #1d4ed8;
-      color: #fff;
-      font-size: 0.65rem;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      padding: 2px 8px;
-      border-radius: 999px;
-      margin-left: 8px;
-      vertical-align: middle;
+      gap: 8px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
     }
-    .name-cell {
+    .disponibilidad-dropdown {
+      position: relative;
+    }
+    .btn-disponibilidad {
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 0.76rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #fff;
+      background: #1d4ed8;
+      border: none;
+      padding: 8px 14px;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+    }
+    .btn-disponibilidad:hover,
+    .btn-disponibilidad[aria-expanded="true"],
+    .btn-disponibilidad.is-active {
+      background: #1e40af;
+      color: #fff;
+    }
+    .disponibilidad-panel {
+      min-width: 210px;
+      right: 0;
+    }
+    .disponibilidad-item {
+      width: 100%;
       display: flex;
       align-items: center;
       gap: 10px;
-      min-width: 180px;
-    }
-    .initials {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-      background: #e2e8f0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: var(--font);
+      font-weight: 500;
+      font-size: 0.9rem;
       color: #334155;
-      font-size: 0.72rem;
+    }
+    .disponibilidad-item:hover { background: var(--surface-muted); }
+    .disponibilidad-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--navy);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .you-badge {
+      display: inline-flex;
+      align-items: center;
+      background: var(--navy);
+      color: #fff;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      padding: 2px 7px;
+      border-radius: var(--radius-pill);
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .name-cell,
+    .person-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 160px;
+    }
+    .person-meta {
+      min-width: 0;
+      flex: 0 1 auto;
+    }
+    .person-name {
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      line-height: 1.3;
+    }
+    .person-tags {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .row-actions {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      margin-left: 4px;
+      flex-shrink: 0;
+    }
+    .icon-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 10px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .icon-btn svg { width: 15px; height: 15px; }
+    .icon-btn:hover { background: var(--surface-muted); color: var(--text); }
+    .icon-btn-danger:hover { background: var(--err-bg); color: var(--err-text); }
+    .initials {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #eef2f7;
+      color: #475569;
+      font-size: 0.7rem;
       font-weight: 700;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.04em;
     }
-    tr.row-mine td { background: #f8fafc; }
-    .day-chip {
+    tr.row-mine td { background: transparent; }
+    .day-chip,
+    .day-check label {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 42px;
-      padding: 4px 10px;
-      border-radius: 30px;
-      font-size: 0.8rem;
-      font-weight: 500;
-      background: #f1f5f9;
+      min-width: 44px;
+      height: 28px;
+      padding: 0 10px;
+      border-radius: var(--radius-pill);
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #f1f4f8;
       color: #94a3b8;
+      border: none;
+      cursor: default;
     }
-    .day-chip.on {
-      background: #dbeafe;
-      color: #1e40af;
+    .day-chip.on,
+    .day-check label:has(input:checked) {
+      background: var(--blue);
+      color: #fff;
     }
     .list-hint {
       margin-top: 14px;
-      color: #64748b;
+      color: var(--text-muted);
       font-size: 0.8rem;
+      line-height: 1.45;
     }
 
-    /* Tabla voluntarios */
-    .table-wrapper { overflow-x: auto; border-radius: 16px; border: 1px solid #e9eef3; }
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
     table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
     th {
       text-align: left;
-      padding: 14px 16px;
-      background: #f8fafc;
-      font-weight: 600;
-      color: #475569;
-      border-bottom: 1px solid #e2e8f0;
+      padding: 14px 16px 10px;
+      background: var(--surface);
+      font-weight: 500;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
       white-space: nowrap;
+      font-size: 0.88rem;
     }
     td {
-      padding: 12px 16px;
-      border-bottom: 1px solid #edf2f7;
+      padding: 14px 16px;
+      border-bottom: 1px solid #f1f4f8;
       vertical-align: middle;
     }
     tr:last-child td { border-bottom: none; }
     .day-check {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(44px, max-content));
       gap: 6px;
-      flex-wrap: wrap;
+      justify-content: start;
     }
+    #voluntariosTable td:first-child { min-width: 180px; }
+    #voluntariosTable td:last-child { width: 46%; }
     .day-check label {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      background: #f1f5f9;
-      padding: 4px 10px;
-      border-radius: 30px;
-      font-size: 0.8rem;
-      font-weight: 500;
       cursor: pointer;
-      transition: all 0.1s;
-      color: #334155;
+      transition: background 0.12s, color 0.12s;
     }
     .day-check input[type="checkbox"] { display: none; }
     .day-check input[type="checkbox"]:checked + span {
-      background: #3b82f6;
-      color: white;
-      padding: 4px 10px;
-      border-radius: 30px;
-      margin: -4px -10px;
-    }
-    .day-check label:has(input:checked) {
-      background: #3b82f6;
+      background: var(--blue);
       color: white;
     }
-    .captain-badge {
-      display: inline-block;
-      background: #f59e0b;
+    .captain-badge,
+    .captain-toggle span {
+      display: inline-flex;
+      align-items: center;
+      background: var(--cap);
       color: #1e1e1e;
-      font-weight: 700;
-      font-size: 0.7rem;
-      padding: 2px 10px;
-      border-radius: 30px;
-      margin-left: 8px;
-      letter-spacing: 0.3px;
+      font-weight: 800;
+      font-size: 0.62rem;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      letter-spacing: 0.04em;
+    }
+    .captain-toggle {
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    .captain-toggle input { display: none; }
+    .captain-toggle:not(.is-on) span,
+    .captain-toggle:not(:has(input:checked)) span {
+      background: #f1f4f8;
+      color: var(--text-muted);
+    }
+    .captain-toggle.is-on span,
+    .captain-toggle:has(input:checked) span {
+      background: var(--cap);
+      color: #1e1e1e;
     }
     .captain-days {
-      font-size: 0.75rem;
-      color: #b45309;
-      font-weight: 500;
-      background: #fef3c7;
-      padding: 2px 8px;
-      border-radius: 20px;
+      font-size: 0.72rem;
+      color: var(--cap-text);
+      font-weight: 600;
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
       display: inline-block;
     }
     .badge-config {
-      background: #e2e8f0;
-      color: #1e293b;
-      padding: 4px 12px;
-      border-radius: 30px;
-      font-size: 0.8rem;
-      font-weight: 600;
+      background: var(--surface-muted);
+      color: #334155;
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      font-size: 0.78rem;
+      font-weight: 500;
     }
 
-    /* Config por día */
     .config-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: 16px;
+      gap: 12px;
       margin-top: 8px;
     }
     .config-item {
-      background: #f8fafc;
+      background: var(--surface-muted);
       border-radius: 16px;
       padding: 16px 12px;
       text-align: center;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border);
     }
     .config-item label {
       display: block;
       font-weight: 600;
-      font-size: 0.85rem;
+      font-size: 0.78rem;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #64748b;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
       margin-bottom: 8px;
     }
     .config-item input {
       width: 70px;
       padding: 10px;
-      border-radius: 40px;
-      border: 1.5px solid #cbd5e1;
-      font-family: 'Inter', sans-serif;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-strong);
+      font-family: var(--font);
       font-weight: 600;
       text-align: center;
       font-size: 1rem;
@@ -466,11 +661,10 @@
     }
     .config-item input:focus {
       outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+      border-color: var(--navy);
+      box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
     }
 
-    /* Planilla generada */
     .planilla-header {
       display: flex;
       flex-wrap: wrap;
@@ -480,40 +674,40 @@
       gap: 16px;
     }
     .periodo-badge {
-      background: #3b82f6;
+      background: var(--navy);
       color: white;
-      padding: 8px 20px;
-      border-radius: 40px;
+      padding: 8px 16px;
+      border-radius: var(--radius-pill);
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       display: inline-flex;
       align-items: center;
       gap: 8px;
     }
     .planilla-dias {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
       margin-top: 8px;
     }
     .dia-card {
-      background: #f8fafc;
-      border-radius: 20px;
-      border: 1px solid #e2e8f0;
+      background: var(--surface);
+      border-radius: 18px;
+      border: 1px solid var(--border);
       overflow: hidden;
     }
     .dia-card .dia-header {
-      background: #eef2f6;
-      padding: 12px 16px;
+      background: var(--surface-muted);
+      padding: 12px 14px;
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 0.95rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #d1d9e6;
+      border-bottom: 1px solid var(--border);
     }
     .dia-card .dia-body {
-      padding: 12px 16px;
+      padding: 12px 14px;
       display: flex;
       flex-direction: column;
       gap: 6px;
@@ -522,41 +716,42 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.9rem;
-      padding: 4px 0;
-      border-bottom: 1px dashed #e2e8f0;
+      font-size: 0.88rem;
+      padding: 6px 0;
+      border-bottom: 1px solid #f1f4f8;
       gap: 8px;
     }
     .voluntario-item:last-child { border-bottom: none; }
     .voluntario-item.soy-yo {
-      background: #dbeafe;
+      background: var(--surface-muted);
       border-radius: 10px;
       padding: 8px 10px;
       margin: 0 -4px;
       border-bottom: none;
       font-weight: 700;
-      color: #1e40af;
+      color: var(--text);
     }
     .dia-card.dia-mio {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
+      border-color: var(--border-strong);
+      box-shadow: none;
     }
     .dia-card.dia-mio .dia-header {
-      background: #dbeafe;
-      color: #1e40af;
+      background: var(--surface-muted);
+      color: var(--text);
     }
     .capitan-tag {
-      background: #f59e0b;
+      background: var(--cap);
       color: #1e1e1e;
-      font-weight: 700;
-      font-size: 0.65rem;
-      padding: 2px 8px;
-      border-radius: 30px;
+      font-weight: 800;
+      font-size: 0.6rem;
+      padding: 2px 7px;
+      border-radius: var(--radius-pill);
+      margin-left: 6px;
     }
     .btn-quitar-asig {
       border: none;
-      background: #fee2e2;
-      color: #b91c1c;
+      background: var(--err-bg);
+      color: var(--err-text);
       width: 24px;
       height: 24px;
       border-radius: 999px;
@@ -569,43 +764,48 @@
     .planilla-add {
       margin-top: 10px;
     }
-    .planilla-add select {
+    .planilla-add select,
+    .select-pill {
       width: 100%;
-      padding: 8px 10px;
-      border-radius: 12px;
-      border: 1.5px solid #cbd5e1;
+      padding: 10px 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-strong);
       font-family: inherit;
-      font-size: 0.8rem;
+      font-size: 0.84rem;
       background: white;
+      color: var(--text);
+    }
+    .select-pill {
+      min-width: 240px;
+      font-weight: 500;
     }
     .planilla-hint {
-      color: #64748b;
+      color: var(--text-muted);
       font-size: 0.85rem;
       margin: -4px 0 12px;
     }
     .turno-aviso {
-      border-left: 4px solid #0284c7;
-      background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%);
+      border-left: none;
+      background: var(--surface-muted);
     }
     .turno-aviso.vacio {
-      border-left-color: #94a3b8;
-      background: #f8fafc;
+      background: var(--surface-muted);
     }
     .turno-aviso-kicker {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 700;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: #0369a1;
+      color: var(--text-muted);
       margin-bottom: 6px;
     }
     .turno-aviso-fecha {
       font-size: 1.05rem;
       font-weight: 700;
-      color: #0f172a;
+      color: var(--text);
     }
     .turno-aviso p {
-      color: #64748b;
+      color: var(--text-muted);
       font-size: 0.88rem;
       margin-top: 4px;
     }
@@ -621,74 +821,72 @@
       align-items: baseline;
       gap: 12px;
       padding: 8px 0;
-      border-bottom: 1px dashed #e2e8f0;
+      border-bottom: 1px solid #f1f4f8;
       font-size: 0.9rem;
     }
     .turno-lista-item:last-child { border-bottom: none; }
     .turno-lista-item.soy-yo {
-      background: #dbeafe;
+      background: var(--surface-muted);
       margin: 0 -12px;
       padding: 8px 12px;
       border-radius: 12px;
       border-bottom: none;
-      color: #1e40af;
+      color: var(--text);
       font-weight: 700;
     }
     .turno-lista-item span:last-child {
-      color: #0369a1;
+      color: var(--text-muted);
       font-weight: 600;
       white-space: nowrap;
     }
     .turno-lista-item .sin-turno {
-      color: #94a3b8;
+      color: var(--text-soft);
       font-weight: 500;
     }
 
-    /* Historial */
     .historial-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid #edf2f7;
+      padding: 14px 0;
+      border-bottom: 1px solid #f1f4f8;
     }
     .historial-item:last-child { border-bottom: none; }
     .historial-fecha {
       font-weight: 600;
-      color: #0f172a;
+      color: var(--text);
     }
     .historial-acciones button {
       margin-left: 8px;
     }
 
-    /* Modal simple */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.3);
+      background: rgba(15, 23, 42, 0.28);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 1000;
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(6px);
     }
     .modal-overlay[hidden] { display: none !important; }
     .modal-box {
       background: white;
-      border-radius: 20px;
-      padding: 28px 32px;
+      border-radius: 24px;
+      padding: 28px 28px 24px;
       max-width: 440px;
       width: 90%;
-      box-shadow: 0 30px 60px -12px rgba(0,0,0,0.3);
+      box-shadow: 0 24px 48px -16px rgba(15, 23, 42, 0.28);
     }
     .modal-box h3 {
       font-size: 1.2rem;
       margin-bottom: 8px;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.03em;
     }
-    .modal-box p { color: #475569; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5; }
+    .modal-box p { color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5; }
     .modal-error {
-      color: #dc2626;
+      color: var(--err-text);
       font-size: 0.85rem;
       font-weight: 600;
       margin: 0 0 8px;
@@ -697,7 +895,7 @@
     .link-danger {
       background: none;
       border: none;
-      color: #dc2626;
+      color: var(--err-text);
       font-family: inherit;
       font-size: 0.82rem;
       font-weight: 600;
@@ -715,59 +913,57 @@
     .flex { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
     .mt-4 { margin-top: 16px; }
     .mb-2 { margin-bottom: 8px; }
-    .text-muted { color: #64748b; font-size: 0.85rem; }
-    .empty-state { padding: 40px; text-align: center; color: #94a3b8; font-size: 0.95rem; }
+    .text-muted { color: var(--text-muted); font-size: 0.85rem; }
+    .empty-state { padding: 36px 16px; text-align: center; color: var(--text-soft); font-size: 0.92rem; }
     .title-row {
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
       align-items: flex-start;
       gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 24px;
+      margin-bottom: 16px;
     }
     .title-row h1 { margin-bottom: 0; }
     .sync-pill {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 600;
-      padding: 6px 12px;
-      border-radius: 30px;
-      background: #e2e8f0;
-      color: #334155;
+      padding: 5px 11px;
+      border-radius: var(--radius-pill);
+      background: #eef2f7;
+      color: #475569;
       white-space: nowrap;
-      align-self: center;
     }
-    .sync-pill.ok { background: #dcfce7; color: #166534; }
-    .sync-pill.warn { background: #fef3c7; color: #92400e; }
-    .sync-pill.err { background: #fee2e2; color: #991b1b; }
+    .sync-pill.ok { background: var(--ok-bg); color: var(--ok-text); }
+    .sync-pill.warn { background: var(--warn-bg); color: var(--warn-text); }
+    .sync-pill.err { background: var(--err-bg); color: var(--err-text); }
     .setup-steps { color: #475569; font-size: 0.9rem; margin-bottom: 16px; line-height: 1.55; }
     .setup-steps ol { padding-left: 18px; }
     .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-    .field label { font-size: 0.8rem; font-weight: 600; color: #475569; }
+    .field label { font-size: 0.78rem; font-weight: 600; color: #475569; }
     .field input {
-      padding: 10px 14px;
-      border-radius: 16px;
-      border: 1.5px solid #cbd5e1;
+      padding: 11px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border-strong);
       font-family: inherit;
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       background: white;
     }
     .field input:focus {
       outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+      border-color: var(--navy);
+      box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
     }
     .field input:disabled {
-      background: #f1f5f9;
-      color: #94a3b8;
+      background: var(--surface-muted);
+      color: var(--text-soft);
       cursor: not-allowed;
     }
     .field.is-disabled label {
-      color: #94a3b8;
+      color: var(--text-soft);
     }
     .loading-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(245, 247, 251, 0.72);
+      background: rgba(238, 241, 246, 0.55);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -779,7 +975,7 @@
     .acceso-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.45);
+      background: rgba(15, 23, 42, 0.4);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -789,19 +985,20 @@
     .acceso-overlay[hidden] { display: none !important; }
     .acceso-dialog {
       width: 100%;
-      max-width: 380px;
+      max-width: 400px;
       background: #ffffff;
       border-radius: 24px;
-      padding: 24px;
-      box-shadow: 0 24px 48px -16px rgba(15, 23, 42, 0.35);
+      padding: 26px;
+      box-shadow: 0 24px 48px -16px rgba(15, 23, 42, 0.3);
     }
     .acceso-dialog h2 {
-      font-size: 1.15rem;
+      font-size: 1.2rem;
       margin-bottom: 8px;
-      color: #0f172a;
+      color: var(--text);
+      letter-spacing: -0.03em;
     }
     .acceso-dialog p {
-      color: #64748b;
+      color: var(--text-muted);
       font-size: 0.9rem;
       margin-bottom: 16px;
     }
@@ -809,8 +1006,8 @@
       width: 100%;
       margin-bottom: 12px;
       padding: 10px 14px;
-      border-radius: 16px;
-      border: 1.5px solid #cbd5e1;
+      border-radius: 14px;
+      border: 1px solid var(--border-strong);
       font-family: inherit;
       font-size: 1.1rem;
       letter-spacing: 0.2em;
@@ -819,37 +1016,44 @@
     }
     .acceso-dialog input:focus {
       outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+      border-color: var(--navy);
+      box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
     }
     .acceso-error {
-      color: #dc2626;
+      color: var(--err-text);
       font-size: 0.85rem;
       font-weight: 600;
       margin: -4px 0 12px;
     }
     .acceso-error[hidden] { display: none !important; }
+    .brand-copy {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      min-width: 0;
+    }
     .title-meta {
       display: flex;
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
+      margin-top: 14px;
     }
     .role-pill {
       border: none;
       font-family: inherit;
-      font-size: 0.75rem;
-      font-weight: 700;
-      padding: 6px 12px;
-      border-radius: 30px;
-      background: #eff6ff;
-      color: #1d4ed8;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 5px 11px;
+      border-radius: var(--radius-pill);
+      background: #eef2f7;
+      color: #475569;
       cursor: pointer;
       white-space: nowrap;
     }
-    .role-pill:hover { background: #dbeafe; }
-    .role-pill.admin { background: #fef3c7; color: #92400e; }
-    .role-pill.admin:hover { background: #fde68a; }
+    .role-pill:hover { background: #e4e9f0; }
+    .role-pill.admin { background: var(--admin-bg); color: var(--admin-text); }
+    .role-pill.admin:hover { background: #ffe9b8; }
     .onboarding-dialog {
       max-width: 440px;
       max-height: min(90vh, 720px);
@@ -863,8 +1067,8 @@
     .role-choice {
       width: 100%;
       text-align: left;
-      border: 1.5px solid #e2e8f0;
-      background: #f8fafc;
+      border: 1px solid var(--border);
+      background: var(--surface);
       border-radius: 16px;
       padding: 16px;
       cursor: pointer;
@@ -872,41 +1076,41 @@
       transition: border-color 0.15s, background 0.15s;
     }
     .role-choice:hover {
-      border-color: #3b82f6;
-      background: #eff6ff;
+      border-color: var(--border-strong);
+      background: var(--surface-muted);
     }
     .role-choice strong {
       display: block;
       font-size: 1rem;
-      color: #0f172a;
+      color: var(--text);
       margin-bottom: 4px;
     }
     .role-choice span {
-      color: #64748b;
+      color: var(--text-muted);
       font-size: 0.85rem;
       line-height: 1.4;
     }
     .or-divider {
       text-align: center;
-      color: #94a3b8;
-      font-size: 0.78rem;
-      font-weight: 700;
+      color: var(--text-soft);
+      font-size: 0.75rem;
+      font-weight: 600;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       margin: 8px 0 16px;
     }
     .field select {
-      padding: 10px 14px;
-      border-radius: 16px;
-      border: 1.5px solid #cbd5e1;
+      padding: 11px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border-strong);
       font-family: inherit;
       font-size: 0.9rem;
       background: white;
     }
     .field select:focus {
       outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+      border-color: var(--navy);
+      box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
     }
     [hidden] { display: none !important; }
   </style>
@@ -915,15 +1119,23 @@
 <div class="app-container">
   <div class="title-row">
     <div class="brand">
-      <div class="brand-mark" aria-hidden="true">VL</div>
-      <div>
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <g fill="currentColor" transform="rotate(-32 12 13)">
+            <rect x="11" y="2" width="2" height="11" rx="1"/>
+            <path d="M6.8 13h10.4L16 20.4A2 2 0 0 1 14 22h-4a2 2 0 0 1-2-1.6L6.8 13z"/>
+            <rect x="8.2" y="15" width="7.6" height="1.2" rx="0.6" fill="#eef2f7"/>
+          </g>
+        </svg>
+      </div>
+      <div class="brand-copy">
         <h1>Voluntarios de Limpieza</h1>
         <p class="subtitle">Turnos semanales y asignación de capitanes</p>
+        <div class="title-meta">
+          <button type="button" id="rolBadgeBtn" class="role-pill" hidden title="Cambiar de rol"></button>
+          <div id="syncStatus" class="sync-pill">Local</div>
+        </div>
       </div>
-    </div>
-    <div class="title-meta">
-      <button type="button" id="rolBadgeBtn" class="role-pill" hidden title="Cambiar de rol"></button>
-      <div id="syncStatus" class="sync-pill">Local</div>
     </div>
   </div>
   <div id="supabaseSetup" class="card" hidden>
@@ -954,15 +1166,32 @@
 
   <!-- Pestañas -->
   <div class="tabs">
-    <button class="tab-btn active" data-tab="voluntarios"><i>👥</i> Voluntarios</button>
-    <button class="tab-btn" data-tab="planilla"><i>📅</i> Planilla semanal</button>
+    <button class="tab-btn active" data-tab="voluntarios">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      Voluntarios
+    </button>
+    <button class="tab-btn" data-tab="planilla">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="18" rx="2"/>
+        <path d="M16 2v4M8 2v4M3 10h18"/>
+      </svg>
+      <span id="planillaTabLabel">Planilla semanal</span>
+    </button>
     <div class="tab-dropdown" id="menuConfigDropdown">
       <button type="button" class="tab-btn" id="menuConfigBtn" aria-haspopup="true" aria-expanded="false" aria-label="Configuración" title="Configuración">
-        <i>⚙️</i>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
       </button>
       <div class="tab-dropdown-menu" id="menuConfigPanel" hidden>
-        <button type="button" class="tab-dropdown-item" data-tab="config"><i>⚙️</i> Configuración</button>
-        <button type="button" class="tab-dropdown-item" data-tab="historial"><i>🗂️</i> Historial</button>
+        <button type="button" class="tab-dropdown-item" data-tab="config">Configuración</button>
+        <button type="button" class="tab-dropdown-item" data-tab="historial">Historial</button>
       </div>
     </div>
   </div>
@@ -980,20 +1209,30 @@
     </div>
     <div class="card me-banner" id="miRegistroCard" hidden>
       <div>
-        <div class="eyebrow" style="font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#64748b;margin-bottom:6px;">Tu registro en este dispositivo</div>
+        <div class="eyebrow" style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#64748b;margin-bottom:6px;">Tu registro en este dispositivo</div>
         <strong id="miRegistroNombre">—</strong>
         <p id="miRegistroHint" class="text-muted" style="margin-top:4px;">Solo tú puedes editar este nombre y tus días disponibles.</p>
       </div>
-      <button type="button" class="btn btn-outline btn-sm" id="editarMiRegistroBtn">Editar mis datos</button>
+      <div class="me-banner-actions">
+        <button type="button" class="btn btn-outline btn-sm" id="editarMiRegistroBtn">Editar mis datos</button>
+        <div class="disponibilidad-dropdown" id="disponibilidadDropdown">
+          <button type="button" class="btn-disponibilidad" id="disponibilidadBtn" aria-haspopup="true" aria-expanded="false">DISPONIBILIDAD</button>
+          <div class="tab-dropdown-menu disponibilidad-panel" id="disponibilidadPanel" hidden></div>
+        </div>
+      </div>
     </div>
     <div class="card">
       <div class="card-title">
         <span class="card-title-left">
-          Lista de voluntarios
-          <span class="count-pill" id="voluntariosCount">0</span>
+          Lista de voluntarios <span class="count-wrap">(<span class="count-pill" id="voluntariosCount">0</span>)</span>
         </span>
         <div class="filtro-dropdown" id="filtroVoluntariosDropdown" hidden>
-          <button type="button" class="btn btn-outline btn-sm" id="filtroVoluntariosBtn" aria-haspopup="true" aria-expanded="false">Filtro</button>
+          <button type="button" class="btn btn-outline btn-sm" id="filtroVoluntariosBtn" aria-haspopup="true" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+              <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>
+            </svg>
+            Filtrar
+          </button>
           <div class="tab-dropdown-menu" id="filtroVoluntariosPanel" hidden></div>
         </div>
       </div>
@@ -1003,9 +1242,6 @@
             <tr>
               <th>Nombre y apellido</th>
               <th>Disponibilidad (M-S)</th>
-              <th>Capitán</th>
-              <th>Días como capitán</th>
-              <th></th>
             </tr>
           </thead>
           <tbody id="voluntariosBody"></tbody>
@@ -1019,7 +1255,7 @@
   <!-- Contenido: Configuración -->
   <div id="tab-config" class="tab-content">
     <div class="card">
-      <div class="card-title">👥 Voluntarios necesarios por día</div>
+      <div class="card-title">Voluntarios necesarios por día</div>
       <p class="text-muted mb-2">Configura cuántas personas se necesitan cada día (de martes a sábado).</p>
       <div class="config-grid" id="configDiasGrid">
         <!-- Generado por JS -->
@@ -1032,19 +1268,19 @@
     <div class="card">
       <div class="card-title">
         <span id="planillaTitulo">Generar planilla</span>
-        <button class="btn btn-outline btn-sm" id="nuevaSemanaBtn">+ Nueva semana</button>
+        <button class="btn btn-outline btn-sm" id="nuevaSemanaBtn">Nueva semana</button>
       </div>
       <p class="planilla-hint" id="planillaHint">Genera la planilla de la semana y luego ajusta quién va cada día.</p>
       <div class="flex">
         <div>
           <label class="text-muted" style="font-size:0.8rem; font-weight:600;" id="semanaSelectLabel">Semana seleccionada</label>
-          <select id="semanaSelect" style="padding:10px 16px; border-radius:40px; border:1.5px solid #cbd5e1; font-family:Inter; font-weight:500; background:white; min-width:240px;">
+          <select id="semanaSelect" class="select-pill">
             <option value="">— Selecciona una semana —</option>
           </select>
         </div>
-        <button class="btn" id="generarPlanillaBtn" style="margin-top:20px;">🔄 Generar planilla</button>
-        <button class="btn btn-danger" id="eliminarPlanillaBtn" style="margin-top:20px;" hidden>🗑️ Eliminar fecha</button>
-        <button class="btn btn-outline" id="exportarJpgBtn" style="margin-top:20px;">⬇️ Exportar JPG</button>
+        <button class="btn" id="generarPlanillaBtn" style="margin-top:20px;">Generar planilla</button>
+        <button class="btn btn-danger" id="eliminarPlanillaBtn" style="margin-top:20px;" hidden>Eliminar fecha</button>
+        <button class="btn btn-outline" id="exportarJpgBtn" style="margin-top:20px;">Exportar JPG</button>
       </div>
     </div>
     <div class="card" id="planillaContainer">
@@ -1057,7 +1293,7 @@
   <!-- Contenido: Historial -->
   <div id="tab-historial" class="tab-content">
     <div class="card">
-      <div class="card-title">📋 Semanas anteriores</div>
+      <div class="card-title">Semanas anteriores</div>
       <div id="historialList">
         <div class="empty-state">No hay planillas guardadas.</div>
       </div>
@@ -1566,6 +1802,7 @@
       filtroDiaVoluntarios = '';
       cerrarFiltroVoluntarios();
     }
+    if (admin) cerrarDisponibilidad();
     const genBtn = document.getElementById('generarPlanillaBtn');
     const nuevaBtn = document.getElementById('nuevaSemanaBtn');
     const exportBtn = document.getElementById('exportarJpgBtn');
@@ -1573,7 +1810,7 @@
     const titulo = document.getElementById('planillaTitulo');
     const hint = document.getElementById('planillaHint');
     const semanaLabel = document.getElementById('semanaSelectLabel');
-    const planillaTab = document.querySelector('.tabs > .tab-btn[data-tab="planilla"]');
+    const planillaTabLabel = document.getElementById('planillaTabLabel');
     if (genBtn) genBtn.hidden = !admin;
     if (nuevaBtn) nuevaBtn.hidden = !admin;
     if (exportBtn) exportBtn.hidden = !admin;
@@ -1585,7 +1822,7 @@
         : 'Consulta el programa de la semana. Tu nombre aparece resaltado.';
     }
     if (semanaLabel) semanaLabel.textContent = admin ? 'Semana seleccionada' : 'Programa';
-    if (planillaTab) planillaTab.innerHTML = admin ? '<i>📅</i> Planilla semanal' : '<i>📅</i> Programa';
+    if (planillaTabLabel) planillaTabLabel.textContent = admin ? 'Planilla semanal' : 'Programa';
     if (!admin) {
       const configTab = document.getElementById('tab-config');
       if (configTab?.classList.contains('active')) activarPestana('voluntarios');
@@ -1863,6 +2100,11 @@
       cerrarFiltroVoluntarios();
       return;
     }
+    const dispPanel = document.getElementById('disponibilidadPanel');
+    if (dispPanel && !dispPanel.hidden) {
+      cerrarDisponibilidad();
+      return;
+    }
     cerrarMenuConfig();
   });
 
@@ -1899,6 +2141,7 @@
       }
       cerrarMenuConfig();
       cerrarFiltroVoluntarios();
+      cerrarDisponibilidad();
     };
 
     if (tab === 'config' && !tieneAccesoAdmin()) {
@@ -1935,9 +2178,12 @@
       if (dropdown && !dropdown.contains(event.target)) cerrarMenuConfig();
       const filtro = document.getElementById('filtroVoluntariosDropdown');
       if (filtro && !filtro.contains(event.target)) cerrarFiltroVoluntarios();
+      const disp = document.getElementById('disponibilidadDropdown');
+      if (disp && !disp.contains(event.target)) cerrarDisponibilidad();
     });
 
     setupFiltroVoluntarios();
+    setupDisponibilidad();
   }
 
   window.activarPestana = activarPestana;
@@ -1998,6 +2244,89 @@
     });
   }
 
+  function cerrarDisponibilidad() {
+    const panel = document.getElementById('disponibilidadPanel');
+    const btn = document.getElementById('disponibilidadBtn');
+    if (panel) panel.hidden = true;
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+
+  function actualizarMenuDisponibilidad() {
+    const wrap = document.getElementById('disponibilidadDropdown');
+    const panel = document.getElementById('disponibilidadPanel');
+    const btn = document.getElementById('disponibilidadBtn');
+    const mio = voluntarios.find(v => esMiVoluntario(v));
+    const visible = Boolean(mio) && !tieneAccesoAdmin();
+    if (wrap) wrap.hidden = !visible;
+    if (!visible) {
+      cerrarDisponibilidad();
+      return;
+    }
+    const dias = mio.dias || [];
+    if (btn) btn.classList.toggle('is-active', dias.length > 0);
+    if (!panel) return;
+    const existentes = panel.querySelectorAll('input[type="checkbox"][data-dia]');
+    if (existentes.length === DIAS.length) {
+      existentes.forEach((cb) => {
+        cb.checked = dias.includes(cb.dataset.dia);
+      });
+      return;
+    }
+    panel.innerHTML = DIAS.map(d => {
+      const checked = dias.includes(d) ? 'checked' : '';
+      return `<label class="disponibilidad-item"><input type="checkbox" data-dia="${d}" ${checked}> ${d}</label>`;
+    }).join('');
+  }
+
+  function setupDisponibilidad() {
+    const btn = document.getElementById('disponibilidadBtn');
+    const panel = document.getElementById('disponibilidadPanel');
+    btn?.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (tieneAccesoAdmin() || !voluntarios.some(v => esMiVoluntario(v))) return;
+      const abierto = panel && !panel.hidden;
+      if (abierto) {
+        cerrarDisponibilidad();
+        return;
+      }
+      actualizarMenuDisponibilidad();
+      if (panel) panel.hidden = false;
+      btn.setAttribute('aria-expanded', 'true');
+    });
+    panel?.addEventListener('click', (event) => event.stopPropagation());
+    panel?.addEventListener('change', (event) => {
+      const checkbox = event.target.closest('input[type="checkbox"][data-dia]');
+      if (!checkbox) return;
+      toggleDiaDisponibilidad(checkbox);
+    });
+  }
+
+  function aplicarCambioDiaVoluntario(v, dia, checked) {
+    if (!v || !DIAS.includes(dia) || !puedeEditarVoluntario(v)) return false;
+    if (!Array.isArray(v.dias)) v.dias = [];
+    if (checked) {
+      if (!v.dias.includes(dia)) v.dias.push(dia);
+    } else {
+      v.dias = v.dias.filter(d => d !== dia);
+    }
+    v.dias = DIAS.filter(d => v.dias.includes(d));
+    return true;
+  }
+
+  function persistirDiasVoluntario() {
+    guardarVoluntarios();
+    renderVoluntarios();
+  }
+
+  function toggleDiaDisponibilidad(checkbox) {
+    const mio = voluntarios.find(v => esMiVoluntario(v));
+    if (!aplicarCambioDiaVoluntario(mio, checkbox.dataset.dia, checkbox.checked)) {
+      checkbox.checked = !checkbox.checked;
+      return;
+    }
+    persistirDiasVoluntario();
+  }
+
   // ============================================================
   //  GESTIÓN DE VOLUNTARIOS
   // ============================================================
@@ -2018,7 +2347,7 @@
     if (admin) {
       if (registroCard) registroCard.hidden = false;
       if (miCard) miCard.hidden = true;
-      if (eyebrow) eyebrow.textContent = 'Administración';
+      if (eyebrow) eyebrow.textContent = 'Administración /';
       if (titulo) titulo.textContent = 'Agregar persona';
       if (texto) texto.textContent = 'Registra un voluntario nuevo. Después puedes editar sus días, sus datos o eliminarlo.';
       if (btn) btn.textContent = 'AGREGAR VOLUNTARIO';
@@ -2035,6 +2364,7 @@
       if (editBtn) editBtn.hidden = !mio;
       if (hint) hint.textContent = 'Los demás voluntarios se muestran para consulta. Solo puedes modificar tus datos y tus días.';
     }
+    actualizarMenuDisponibilidad();
   }
 
   function renderVoluntarios() {
@@ -2074,34 +2404,37 @@
       const esMia = !admin && esMiVoluntario(v);
       const puedeEditar = esMia || admin;
       const fullName = nombreCompleto(v);
-      const diasHtml = puedeEditar
-        ? DIAS.map(d => {
-            const checked = v.dias?.includes(d) ? 'checked' : '';
-            return `<label><input type="checkbox" data-idx="${idx}" data-dia="${d}" ${checked} onchange="toggleDiaVoluntario(this)"> ${DIAS_ABREV[d]}</label>`;
-          }).join('')
-        : DIAS.map(d => {
-            const on = v.dias?.includes(d) ? 'on' : '';
-            return `<span class="day-chip ${on}">${DIAS_ABREV[d]}</span>`;
-          }).join('');
-      const capitanDias = v.diasCapitan?.length ? `<span class="captain-days">${v.diasCapitan.map(d=>DIAS_ABREV[d]).join(', ')}</span>` : '<span class="text-muted">—</span>';
-      const capitanCell = admin
-        ? `<input type="checkbox" ${v.esCapitan ? 'checked' : ''} onchange="toggleCapitan(${idx}, this)" aria-label="Marcar capitán">`
-        : (v.esCapitan ? '<span class="captain-badge">CAP</span>' : '<span class="text-muted">—</span>');
+      const diasHtml = DIAS.map(d => {
+        const on = v.dias?.includes(d);
+        if (puedeEditar) {
+          return `<label class="day-chip${on ? ' on' : ''}"><input type="checkbox" data-idx="${idx}" data-dia="${d}" ${on ? 'checked' : ''} onchange="toggleDiaVoluntario(this)"> ${DIAS_ABREV[d]}</label>`;
+        }
+        return `<span class="day-chip${on ? ' on' : ''}">${DIAS_ABREV[d]}</span>`;
+      }).join('');
+      const tags = [
+        admin
+          ? `<label class="captain-toggle${v.esCapitan ? ' is-on' : ''}"><input type="checkbox" ${v.esCapitan ? 'checked' : ''} onchange="toggleCapitan(${idx}, this)" aria-label="Marcar capitán"><span>CAP</span></label>`
+          : (v.esCapitan ? '<span class="captain-badge">CAP</span>' : ''),
+        v.esCapitan && v.diasCapitan?.length ? `<span class="captain-days">${v.diasCapitan.map(d => DIAS_ABREV[d]).join(' · ')}</span>` : ''
+      ].filter(Boolean).join('');
+      const iconEdit = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>';
+      const iconTrash = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>';
       const acciones = [
-        puedeEditar ? `<button type="button" class="btn btn-outline btn-sm" onclick="abrirEdicionVoluntario(${idx})">Editar</button>` : '',
-        admin ? `<button type="button" class="btn btn-outline btn-sm" onclick="eliminarVoluntario(${idx})">✕</button>` : ''
-      ].filter(Boolean).join(' ');
+        puedeEditar ? `<button type="button" class="icon-btn" onclick="abrirEdicionVoluntario(${idx})" title="Editar" aria-label="Editar">${iconEdit}</button>` : '',
+        admin ? `<button type="button" class="icon-btn icon-btn-danger" onclick="eliminarVoluntario(${idx})" title="Eliminar" aria-label="Eliminar">${iconTrash}</button>` : ''
+      ].filter(Boolean).join('');
       return `<tr class="${esMia ? 'row-mine' : ''}">
         <td>
-          <div class="name-cell">
+          <div class="person-row">
             <span class="initials">${escapeHtml(inicialesDe(v))}</span>
-            <span><strong>${escapeHtml(fullName)}</strong>${esMia ? '<span class="you-badge">TÚ</span>' : ''}${v.esCapitan ? '<span class="captain-badge">CAP</span>' : ''}</span>
+            <div class="person-meta">
+              <div class="person-name">${escapeHtml(fullName)}${esMia ? '<span class="you-badge">TÚ</span>' : ''}</div>
+              ${tags ? `<div class="person-tags">${tags}</div>` : ''}
+            </div>
+            ${acciones ? `<div class="row-actions">${acciones}</div>` : ''}
           </div>
         </td>
         <td><div class="day-check">${diasHtml}</div></td>
-        <td style="text-align:center;">${capitanCell}</td>
-        <td>${capitanDias}</td>
-        <td>${acciones || '<span class="text-muted">—</span>'}</td>
       </tr>`;
       }).join('');
   }
@@ -2110,18 +2443,11 @@
     const idx = parseInt(checkbox.dataset.idx, 10);
     const dia = checkbox.dataset.dia;
     const v = voluntarios[idx];
-    if (!v || !puedeEditarVoluntario(v)) {
+    if (!aplicarCambioDiaVoluntario(v, dia, checkbox.checked)) {
       checkbox.checked = !checkbox.checked;
       return;
     }
-    if (!v.dias) v.dias = [];
-    if (checkbox.checked) {
-      if (!v.dias.includes(dia)) v.dias.push(dia);
-    } else {
-      v.dias = v.dias.filter(d => d !== dia);
-    }
-    guardarVoluntarios();
-    renderVoluntarios();
+    persistirDiasVoluntario();
   };
 
   window.toggleCapitan = function(idx, checkbox) {
@@ -2814,7 +3140,7 @@
     const { asignaciones, etiqueta } = planilla;
     let html = `
       <div class="planilla-header">
-        <span class="periodo-badge">📆 ${escapeHtml(etiqueta)}</span>
+        <span class="periodo-badge">${escapeHtml(etiqueta)}</span>
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
           <span class="badge-config">${admin ? 'Voluntarios requeridos' : 'Programa'}: ${DIAS.map(d => `${DIAS_ABREV[d]}:${planilla.configUsada?.[d] || 0}`).join(' · ')}</span>
           ${admin ? `<button type="button" class="btn btn-danger btn-sm" data-eliminar-planilla="${escapeHtml(planilla.periodo)}">Eliminar fecha</button>` : ''}
@@ -3031,34 +3357,31 @@
 
 <!-- Estilos para el botón de exportar y ajustes menores -->
 <style>
-  /* Asegurar que los checkboxes de disponibilidad se vean bien */
   .day-check label {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 42px;
-    transition: all 0.1s;
+    min-width: 44px;
+    height: 28px;
+    transition: background 0.12s, color 0.12s;
   }
   .day-check label:has(input:checked) {
-    background: #3b82f6;
+    background: var(--blue);
     color: white;
   }
-  .day-check label:has(input:checked) span {
-    color: white;
-  }
-  /* Botones dentro de la tabla */
-  td .btn-sm {
-    padding: 4px 12px;
-    font-size: 0.75rem;
-  }
-  /* Responsive */
+  td .icon-btn { flex-shrink: 0; }
   @media (max-width: 768px) {
-    .app-container { padding: 20px 16px; }
-    h1 { font-size: 1.5rem; flex-wrap: wrap; }
-    .tabs { gap: 4px; }
-    .tab-btn { padding: 8px 14px; font-size: 0.85rem; }
+    .app-container { padding: 22px 16px 26px; border-radius: 24px; }
+    h1 { font-size: 1.22rem; }
+    .tabs { gap: 0; }
+    .tab-btn { padding: 10px 10px 12px; font-size: 0.84rem; }
     .config-grid { grid-template-columns: repeat(2, 1fr); }
     .planilla-dias { grid-template-columns: 1fr; }
+    .person-row { gap: 10px; }
+    .row-actions { margin-left: 0; }
+    .day-check { grid-template-columns: repeat(3, minmax(40px, max-content)); }
+    .title-meta { padding-left: 0; margin-top: 8px; }
+    #voluntariosTable td:last-child { width: auto; }
   }
 
   .pwa-banner {
