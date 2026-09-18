@@ -181,6 +181,43 @@
       padding: 4px 10px;
       border-radius: 999px;
     }
+    .card-title-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .filtro-dropdown {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .filtro-dropdown .tab-dropdown-menu {
+      min-width: 200px;
+    }
+    .filtro-dropdown .tab-dropdown-item {
+      justify-content: space-between;
+    }
+    .filtro-dropdown .tab-dropdown-item.active {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+    .filtro-dia-count {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #64748b;
+      background: #f1f5f9;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+    .filtro-dropdown .tab-dropdown-item.active .filtro-dia-count {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+    #filtroVoluntariosBtn.is-active {
+      background: #eff6ff;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+    }
     .btn {
       font-family: 'Inter', sans-serif;
       font-weight: 600;
@@ -951,8 +988,14 @@
     </div>
     <div class="card">
       <div class="card-title">
-        Lista de voluntarios
-        <span class="count-pill" id="voluntariosCount">0</span>
+        <span class="card-title-left">
+          Lista de voluntarios
+          <span class="count-pill" id="voluntariosCount">0</span>
+        </span>
+        <div class="filtro-dropdown" id="filtroVoluntariosDropdown" hidden>
+          <button type="button" class="btn btn-outline btn-sm" id="filtroVoluntariosBtn" aria-haspopup="true" aria-expanded="false">Filtro</button>
+          <div class="tab-dropdown-menu" id="filtroVoluntariosPanel" hidden></div>
+        </div>
       </div>
       <div class="table-wrapper">
         <table id="voluntariosTable">
@@ -1000,6 +1043,7 @@
           </select>
         </div>
         <button class="btn" id="generarPlanillaBtn" style="margin-top:20px;">🔄 Generar planilla</button>
+        <button class="btn btn-danger" id="eliminarPlanillaBtn" style="margin-top:20px;" hidden>🗑️ Eliminar fecha</button>
         <button class="btn btn-outline" id="exportarJpgBtn" style="margin-top:20px;">⬇️ Exportar JPG</button>
       </div>
     </div>
@@ -1112,6 +1156,7 @@
   const CLAVE_ONBOARDING = 'limpieza_onboarding_v3';
   let editandoVoluntarioId = null;
   let onboardingForzoso = true;
+  let filtroDiaVoluntarios = '';
 
   function escapeHtml(str) {
     return String(str ?? '')
@@ -1129,6 +1174,23 @@
     if (!a) return n;
     if (n.toLowerCase().includes(a.toLowerCase())) return n;
     return `${n} ${a}`.trim();
+  }
+
+  function apellidoDe(nombre) {
+    const parts = String(nombre || '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length < 2) return '';
+    return parts.length === 2 ? parts[1] : parts[parts.length - 1];
+  }
+
+  function claveApellido(nombre) {
+    return normalizarNombreComparacion(apellidoDe(nombre));
+  }
+
+  function compararPorApellido(a, b) {
+    const apA = claveApellido(a);
+    const apB = claveApellido(b);
+    if (apA && apB && apA !== apB) return apA.localeCompare(apB, 'es');
+    return String(a || '').localeCompare(String(b || ''), 'es');
   }
 
   function leerNombreYApellido(valor) {
@@ -1332,7 +1394,7 @@
 
   async function guardarPlanillas() {
     try {
-      planillasGuardadas = await window.VoluntariosDB.savePlanillas(planillasGuardadas);
+      planillasGuardadas = await window.VoluntariosDB.savePlanillas(deduplicarPlanillas(planillasGuardadas));
       window.planillasGuardadas = planillasGuardadas;
     } catch (error) {
       setSyncStatus('error', error.message);
@@ -1341,6 +1403,8 @@
   }
 
   function pintarDatos() {
+    planillasGuardadas = deduplicarPlanillas(planillasGuardadas);
+    window.planillasGuardadas = planillasGuardadas;
     sincronizarIdentidadLocal();
     aplicarPermisosUI();
     renderVoluntarios();
@@ -1496,9 +1560,16 @@
     }
     const configItem = document.querySelector('.tab-dropdown-item[data-tab="config"]');
     if (configItem) configItem.hidden = !admin;
+    const filtroWrap = document.getElementById('filtroVoluntariosDropdown');
+    if (filtroWrap) filtroWrap.hidden = !admin;
+    if (!admin && filtroDiaVoluntarios) {
+      filtroDiaVoluntarios = '';
+      cerrarFiltroVoluntarios();
+    }
     const genBtn = document.getElementById('generarPlanillaBtn');
     const nuevaBtn = document.getElementById('nuevaSemanaBtn');
     const exportBtn = document.getElementById('exportarJpgBtn');
+    const eliminarBtn = document.getElementById('eliminarPlanillaBtn');
     const titulo = document.getElementById('planillaTitulo');
     const hint = document.getElementById('planillaHint');
     const semanaLabel = document.getElementById('semanaSelectLabel');
@@ -1506,10 +1577,11 @@
     if (genBtn) genBtn.hidden = !admin;
     if (nuevaBtn) nuevaBtn.hidden = !admin;
     if (exportBtn) exportBtn.hidden = !admin;
+    if (eliminarBtn && !admin) eliminarBtn.hidden = true;
     if (titulo) titulo.textContent = admin ? 'Generar planilla' : 'Programa semanal';
     if (hint) {
       hint.textContent = admin
-        ? 'Genera la planilla de la semana y luego puedes modificar quién va cada día.'
+        ? 'Genera la planilla de la semana, ajusta quién va cada día o elimina una fecha si ya no corresponde.'
         : 'Consulta el programa de la semana. Tu nombre aparece resaltado.';
     }
     if (semanaLabel) semanaLabel.textContent = admin ? 'Semana seleccionada' : 'Programa';
@@ -1786,6 +1858,11 @@
       cerrarModalRegistro();
       return;
     }
+    const filtroPanel = document.getElementById('filtroVoluntariosPanel');
+    if (filtroPanel && !filtroPanel.hidden) {
+      cerrarFiltroVoluntarios();
+      return;
+    }
     cerrarMenuConfig();
   });
 
@@ -1802,7 +1879,7 @@
   function activarPestana(tab, { skipAccess } = {}) {
     const ir = () => {
       document.querySelectorAll('.tabs > .tab-btn[data-tab]').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-dropdown-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#menuConfigPanel .tab-dropdown-item').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       const trigger = document.querySelector(`.tabs > .tab-btn[data-tab="${tab}"]`);
       if (trigger) trigger.classList.add('active');
@@ -1821,6 +1898,7 @@
         renderProximosTurnos();
       }
       cerrarMenuConfig();
+      cerrarFiltroVoluntarios();
     };
 
     if (tab === 'config' && !tieneAccesoAdmin()) {
@@ -1855,10 +1933,70 @@
     document.addEventListener('click', (event) => {
       const dropdown = document.getElementById('menuConfigDropdown');
       if (dropdown && !dropdown.contains(event.target)) cerrarMenuConfig();
+      const filtro = document.getElementById('filtroVoluntariosDropdown');
+      if (filtro && !filtro.contains(event.target)) cerrarFiltroVoluntarios();
     });
+
+    setupFiltroVoluntarios();
   }
 
   window.activarPestana = activarPestana;
+
+  // ============================================================
+  //  FILTRO DE VOLUNTARIOS (ADMIN)
+  // ============================================================
+  function contarVoluntariosPorDia(dia) {
+    if (!dia) return voluntarios.length;
+    return voluntarios.filter((v) => v.dias?.includes(dia)).length;
+  }
+
+  function cerrarFiltroVoluntarios() {
+    const panel = document.getElementById('filtroVoluntariosPanel');
+    const btn = document.getElementById('filtroVoluntariosBtn');
+    if (panel) panel.hidden = true;
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+
+  function actualizarMenuFiltroVoluntarios() {
+    const panel = document.getElementById('filtroVoluntariosPanel');
+    const btn = document.getElementById('filtroVoluntariosBtn');
+    if (btn) btn.classList.toggle('is-active', Boolean(filtroDiaVoluntarios));
+    if (!panel) return;
+    const items = [{ dia: '', label: 'Todos' }, ...DIAS.map((dia) => ({ dia, label: dia }))];
+    panel.innerHTML = items.map(({ dia, label }) => {
+      const count = contarVoluntariosPorDia(dia);
+      const active = (dia || '') === (filtroDiaVoluntarios || '') ? 'active' : '';
+      return `<button type="button" class="tab-dropdown-item ${active}" data-dia="${escapeHtml(dia)}">${escapeHtml(label)}<span class="filtro-dia-count">${count}</span></button>`;
+    }).join('');
+  }
+
+  function aplicarFiltroDiaVoluntarios(dia) {
+    filtroDiaVoluntarios = DIAS.includes(dia) ? dia : '';
+    cerrarFiltroVoluntarios();
+    renderVoluntarios();
+  }
+
+  function setupFiltroVoluntarios() {
+    const btn = document.getElementById('filtroVoluntariosBtn');
+    const panel = document.getElementById('filtroVoluntariosPanel');
+    btn?.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (!tieneAccesoAdmin()) return;
+      const abierto = panel && !panel.hidden;
+      if (abierto) {
+        cerrarFiltroVoluntarios();
+        return;
+      }
+      actualizarMenuFiltroVoluntarios();
+      if (panel) panel.hidden = false;
+      btn.setAttribute('aria-expanded', 'true');
+    });
+    panel?.addEventListener('click', (event) => {
+      const item = event.target.closest('[data-dia]');
+      if (!item) return;
+      aplicarFiltroDiaVoluntarios(item.dataset.dia || '');
+    });
+  }
 
   // ============================================================
   //  GESTIÓN DE VOLUNTARIOS
@@ -1869,7 +2007,6 @@
     const registroCard = document.getElementById('registroCard');
     const miCard = document.getElementById('miRegistroCard');
     const nombreEl = document.getElementById('miRegistroNombre');
-    const countEl = document.getElementById('voluntariosCount');
     const hint = document.getElementById('voluntariosHint');
     const admin = tieneAccesoAdmin();
     const eyebrow = document.getElementById('registroCardEyebrow');
@@ -1878,7 +2015,6 @@
     const btn = document.getElementById('registrarVoluntarioBtn');
     const miHint = document.getElementById('miRegistroHint');
     const editBtn = document.getElementById('editarMiRegistroBtn');
-    if (countEl) countEl.textContent = String(voluntarios.length);
     if (admin) {
       if (registroCard) registroCard.hidden = false;
       if (miCard) miCard.hidden = true;
@@ -1905,20 +2041,35 @@
     const tbody = document.getElementById('voluntariosBody');
     const emptyDiv = document.getElementById('voluntariosEmpty');
     const tableWrap = document.querySelector('#tab-voluntarios .table-wrapper');
+    const countEl = document.getElementById('voluntariosCount');
+    const hint = document.getElementById('voluntariosHint');
     actualizarPanelRegistro();
+    actualizarMenuFiltroVoluntarios();
+    const admin = tieneAccesoAdmin();
+    const diaFiltro = admin ? filtroDiaVoluntarios : '';
+    const filas = voluntarios
+      .map((v, idx) => ({ v, idx }))
+      .filter(({ v }) => !diaFiltro || v.dias?.includes(diaFiltro))
+      .sort((a, b) => Number(!admin && esMiVoluntario(b.v)) - Number(!admin && esMiVoluntario(a.v)));
+    if (countEl) {
+      countEl.textContent = diaFiltro ? `${filas.length} · ${diaFiltro}` : String(filas.length);
+    }
+    if (admin && hint && diaFiltro) {
+      hint.textContent = `Mostrando ${filas.length} voluntario${filas.length === 1 ? '' : 's'} de ${diaFiltro}.`;
+    }
     if (!tbody || !emptyDiv) return;
-    if (!voluntarios.length) {
+    if (!filas.length) {
       tbody.innerHTML = '';
       emptyDiv.style.display = 'block';
+      emptyDiv.textContent = diaFiltro
+        ? `No hay voluntarios para ${diaFiltro}.`
+        : 'Aún no hay voluntarios registrados.';
       if (tableWrap) tableWrap.style.display = 'none';
       return;
     }
     emptyDiv.style.display = 'none';
     if (tableWrap) tableWrap.style.display = '';
-    const admin = tieneAccesoAdmin();
-    tbody.innerHTML = voluntarios
-      .map((v, idx) => ({ v, idx }))
-      .sort((a, b) => Number(!admin && esMiVoluntario(b.v)) - Number(!admin && esMiVoluntario(a.v)))
+    tbody.innerHTML = filas
       .map(({ v, idx }) => {
       const esMia = !admin && esMiVoluntario(v);
       const puedeEditar = esMia || admin;
@@ -2171,12 +2322,98 @@
     if (valor instanceof Date && !Number.isNaN(valor.getTime())) {
       return new Date(valor.getFullYear(), valor.getMonth(), valor.getDate());
     }
-    const texto = String(valor || '');
-    const iso = texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
-    const d = new Date(valor);
+    const texto = String(valor || '').trim();
+    if (!texto) return null;
+    const soloFecha = texto.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (soloFecha) return new Date(Number(soloFecha[1]), Number(soloFecha[2]) - 1, Number(soloFecha[3]));
+    const d = new Date(texto);
     if (Number.isNaN(d.getTime())) return null;
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  function formatearFechaLocalISO(valor) {
+    const d = parseFechaLocal(valor);
+    if (!d) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function etiquetaSemana(inicio, fin) {
+    const i = parseFechaLocal(inicio);
+    const f = parseFechaLocal(fin);
+    if (!i || !f) return '';
+    return `${i.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })} al ${f.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}`;
+  }
+
+  function textoEtiquetaSemana(etiqueta) {
+    return String(etiqueta || '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .replace(/\b0(\d)\b/g, '$1')
+      .trim();
+  }
+
+  function claveVisualSemana(etiqueta, fechaInicio) {
+    const et = textoEtiquetaSemana(etiqueta);
+    if (!et) return '';
+    const inicio = parseFechaLocal(fechaInicio);
+    const year = inicio ? String(inicio.getFullYear()) : '';
+    return year ? `${year}|${et}` : et;
+  }
+
+  function clavePeriodoPlanilla(p) {
+    const inicio = parseFechaLocal(p?.fechaInicio);
+    if (inicio) return `sem_${formatearFechaLocalISO(inicio)}`;
+    const periodo = String(p?.periodo || '');
+    const m = periodo.match(/^sem_(\d{4}-\d{2}-\d{2})/);
+    return m ? `sem_${m[1]}` : periodo;
+  }
+
+  function deduplicarPlanillas(list) {
+    const vistas = new Set();
+    const ordenadas = [...(list || [])].sort((a, b) => new Date(b.creada || 0) - new Date(a.creada || 0));
+    const unicas = [];
+    for (const p of ordenadas) {
+      const clave = clavePeriodoPlanilla(p) || p.periodo;
+      const visual = claveVisualSemana(p.etiqueta || etiquetaSemana(p.fechaInicio, p.fechaFin), p.fechaInicio);
+      if ((clave && vistas.has(`id:${clave}`)) || (visual && vistas.has(`et:${visual}`))) continue;
+      if (clave) vistas.add(`id:${clave}`);
+      if (visual) vistas.add(`et:${visual}`);
+      unicas.push({
+        ...p,
+        periodo: clave || p.periodo,
+        etiqueta: etiquetaSemana(p.fechaInicio, p.fechaFin) || p.etiqueta
+      });
+    }
+    return unicas.sort((a, b) => {
+      const fa = parseFechaLocal(a.fechaInicio)?.getTime() || 0;
+      const fb = parseFechaLocal(b.fechaInicio)?.getTime() || 0;
+      return fa - fb;
+    });
+  }
+
+  function encontrarPlanilla(periodo) {
+    const clave = String(periodo || '');
+    if (!clave) return null;
+    const directa = planillasGuardadas.find((p) => p.periodo === clave || clavePeriodoPlanilla(p) === clave);
+    if (directa) return directa;
+    const semana = (typeof semanasDisponibles !== 'undefined' ? semanasDisponibles : []).find((s) => s.id === clave);
+    if (!semana) return null;
+    const visual = claveVisualSemana(semana.etiqueta, semana.fechaInicio);
+    return planillasGuardadas.find((p) =>
+      clavePeriodoPlanilla(p) === semana.id ||
+      claveVisualSemana(p.etiqueta, p.fechaInicio) === visual
+    ) || null;
+  }
+
+  function agregarOpcionSemanaUnica(opciones, usadas, id, etiqueta, fechaInicio) {
+    const visual = claveVisualSemana(etiqueta, fechaInicio);
+    if (!id || usadas.has(`id:${id}`) || (visual && usadas.has(`et:${visual}`))) return;
+    usadas.add(`id:${id}`);
+    if (visual) usadas.add(`et:${visual}`);
+    opciones.push({ id, etiqueta: etiqueta || id });
   }
 
   function inicioDeHoy() {
@@ -2300,18 +2537,18 @@
 
   function getProximasSemanas() {
     const semanas = [];
-    const hoy = new Date();
-    let fechaBase = new Date(hoy);
-    const diaSemana = fechaBase.getDay();
+    const hoy = inicioDeHoy();
+    const diaSemana = hoy.getDay();
     const diff = (2 - diaSemana + 7) % 7;
-    fechaBase.setDate(fechaBase.getDate() + diff);
+    const fechaBase = new Date(hoy);
+    fechaBase.setDate(hoy.getDate() + diff);
     for (let i = 0; i < 8; i++) {
       const inicio = new Date(fechaBase);
       inicio.setDate(inicio.getDate() + i * 7);
       const fin = new Date(inicio);
       fin.setDate(fin.getDate() + 5);
-      const id = `sem_${inicio.toISOString().slice(0,10)}`;
-      const etiqueta = `${inicio.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit'})} al ${fin.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit'})}`;
+      const id = `sem_${formatearFechaLocalISO(inicio)}`;
+      const etiqueta = etiquetaSemana(inicio, fin);
       semanas.push({ id, fechaInicio: inicio, fechaFin: fin, etiqueta });
     }
     return semanas;
@@ -2335,14 +2572,26 @@
 
   function asegurarOpcionSemana(planilla) {
     const select = document.getElementById('semanaSelect');
-    if (!select || !planilla?.periodo) return;
-    if (![...select.options].some((opt) => opt.value === planilla.periodo)) {
+    if (!select || !planilla) return;
+    const id = clavePeriodoPlanilla(planilla) || planilla.periodo;
+    const etiqueta = planilla.etiqueta || etiquetaSemana(planilla.fechaInicio, planilla.fechaFin) || id;
+    const yaEsta = [...select.options].some((opt) =>
+      opt.value === id ||
+      opt.value === planilla.periodo ||
+      claveVisualSemana(opt.textContent, planilla.fechaInicio) === claveVisualSemana(etiqueta, planilla.fechaInicio)
+    );
+    if (!yaEsta && id) {
       const opt = document.createElement('option');
-      opt.value = planilla.periodo;
-      opt.textContent = planilla.etiqueta || planilla.periodo;
+      opt.value = id;
+      opt.textContent = etiqueta;
       select.appendChild(opt);
     }
-    select.value = planilla.periodo;
+    const coincidente = [...select.options].find((opt) =>
+      opt.value === id ||
+      opt.value === planilla.periodo ||
+      claveVisualSemana(opt.textContent, planilla.fechaInicio) === claveVisualSemana(etiqueta, planilla.fechaInicio)
+    );
+    if (coincidente) select.value = coincidente.value;
   }
 
   function renderSemanaSelect() {
@@ -2350,29 +2599,46 @@
     if (!select) return;
     const valorActual = select.value;
     const admin = tieneAccesoAdmin();
+    const usadas = new Set();
+    const opcionesLista = [];
     if (admin) {
       semanasDisponibles = getProximasSemanas();
-      const ids = new Set(semanasDisponibles.map((s) => s.id));
-      const extras = planillasGuardadas.filter((p) => p.periodo && !ids.has(p.periodo));
-      select.innerHTML = '<option value="">— Selecciona una semana —</option>' +
-        semanasDisponibles.map((s) => `<option value="${s.id}">${escapeHtml(s.etiqueta)}</option>`).join('') +
-        extras.map((p) => `<option value="${escapeHtml(p.periodo)}">${escapeHtml(p.etiqueta || p.periodo)}</option>`).join('');
-    } else {
-      const programas = [...planillasGuardadas].sort((a, b) => {
-        const fa = parseFechaLocal(a.fechaInicio)?.getTime() || 0;
-        const fb = parseFechaLocal(b.fechaInicio)?.getTime() || 0;
-        return fa - fb;
+      semanasDisponibles.forEach((s) => agregarOpcionSemanaUnica(opcionesLista, usadas, s.id, s.etiqueta, s.fechaInicio));
+      planillasGuardadas.forEach((p) => {
+        agregarOpcionSemanaUnica(
+          opcionesLista,
+          usadas,
+          clavePeriodoPlanilla(p) || p.periodo,
+          p.etiqueta || etiquetaSemana(p.fechaInicio, p.fechaFin),
+          p.fechaInicio
+        );
       });
-      select.innerHTML = programas.length
-        ? programas.map((p) => `<option value="${escapeHtml(p.periodo)}">${escapeHtml(p.etiqueta || p.periodo)}</option>`).join('')
+      select.innerHTML = '<option value="">— Selecciona una semana —</option>' +
+        opcionesLista.map((o) => `<option value="${escapeHtml(o.id)}">${escapeHtml(o.etiqueta)}</option>`).join('');
+    } else {
+      const programas = deduplicarPlanillas(planillasGuardadas);
+      programas.forEach((p) => {
+        agregarOpcionSemanaUnica(
+          opcionesLista,
+          usadas,
+          clavePeriodoPlanilla(p) || p.periodo,
+          p.etiqueta || etiquetaSemana(p.fechaInicio, p.fechaFin),
+          p.fechaInicio
+        );
+      });
+      select.innerHTML = opcionesLista.length
+        ? opcionesLista.map((o) => `<option value="${escapeHtml(o.id)}">${escapeHtml(o.etiqueta)}</option>`).join('')
         : '<option value="">— No hay programas publicados —</option>';
     }
     const opciones = [...select.options].map((opt) => opt.value).filter(Boolean);
-    if (valorActual && opciones.includes(valorActual)) {
-      select.value = valorActual;
+    const planillaActual = encontrarPlanilla(valorActual);
+    const valorNormalizado = planillaActual ? (clavePeriodoPlanilla(planillaActual) || planillaActual.periodo) : valorActual;
+    if (valorNormalizado && opciones.includes(valorNormalizado)) {
+      select.value = valorNormalizado;
     } else {
       const def = getPlanillaPorDefecto();
-      if (def && opciones.includes(def.periodo)) select.value = def.periodo;
+      const defId = def ? (clavePeriodoPlanilla(def) || def.periodo) : '';
+      if (defId && opciones.includes(defId)) select.value = defId;
       else if (!admin && opciones.length) select.value = opciones[0];
     }
     mostrarPlanillaSeleccionada();
@@ -2381,11 +2647,19 @@
   function mostrarPlanillaSeleccionada() {
     const select = document.getElementById('semanaSelect');
     const periodo = select?.value || '';
+    const planilla = encontrarPlanilla(periodo);
+    actualizarBotonEliminarSemana(planilla);
     if (!periodo) {
       renderPlanilla(null);
       return;
     }
-    renderPlanilla(planillasGuardadas.find((p) => p.periodo === periodo) || null);
+    renderPlanilla(planilla);
+  }
+
+  function actualizarBotonEliminarSemana(planilla) {
+    const btn = document.getElementById('eliminarPlanillaBtn');
+    if (!btn) return;
+    btn.hidden = !tieneAccesoAdmin() || !planilla;
   }
 
   function generarAsignaciones(periodoId, fechaInicio, fechaFin) {
@@ -2405,29 +2679,63 @@
     const asignaciones = {};
     DIAS.forEach(dia => {
       const necesarios = configDias[dia] || 0;
-      const disponibles = voluntarios.filter(v => v.dias && v.dias.includes(dia));
-      disponibles.sort((a, b) => {
-        const diff = (conteoAsignaciones[nombreCompleto(a)] || 0) - (conteoAsignaciones[nombreCompleto(b)] || 0);
-        if (diff !== 0) return diff;
-        return Math.random() - 0.5;
-      });
-      const seleccionados = disponibles.slice(0, necesarios).map(v => nombreCompleto(v));
-      seleccionados.forEach(n => conteoAsignaciones[n] = (conteoAsignaciones[n] || 0) + 1);
-      asignaciones[dia] = seleccionados;
-    });
+      const seleccionados = [];
+      const usados = new Set();
 
-    DIAS.forEach(dia => {
-      const capitanesDelDia = voluntarios.filter(v => v.esCapitan && v.diasCapitan?.includes(dia) && v.dias?.includes(dia));
-      capitanesDelDia.forEach(cap => {
-        const nombreCap = nombreCompleto(cap);
-        if (!asignaciones[dia].includes(nombreCap)) {
-          if (asignaciones[dia].length >= (configDias[dia] || 0)) {
-            asignaciones[dia].pop();
-          }
-          asignaciones[dia].push(nombreCap);
+      function agregarVoluntario(v) {
+        const nombre = nombreCompleto(v);
+        if (!nombre || usados.has(nombre) || seleccionados.length >= necesarios) return false;
+        seleccionados.push(nombre);
+        usados.add(nombre);
+        conteoAsignaciones[nombre] = (conteoAsignaciones[nombre] || 0) + 1;
+        return true;
+      }
+
+      const capitanesDelDia = voluntarios.filter((v) => v.esCapitan && v.diasCapitan?.includes(dia) && v.dias?.includes(dia));
+      capitanesDelDia.forEach((cap) => agregarVoluntario(cap));
+
+      const disponibles = voluntarios.filter((v) => v.dias?.includes(dia) && !usados.has(nombreCompleto(v)));
+      const vistos = new Set();
+      const unidades = [];
+      disponibles.forEach((v) => {
+        const nombre = nombreCompleto(v);
+        if (vistos.has(nombre)) return;
+        if (v.esCapitan) {
+          vistos.add(nombre);
+          unidades.push([v]);
+          return;
+        }
+        const apellido = claveApellido(nombre);
+        const pareja = apellido
+          ? disponibles.filter((o) => !o.esCapitan && claveApellido(nombreCompleto(o)) === apellido)
+          : [v];
+        if (pareja.length >= 2) {
+          pareja.forEach((o) => vistos.add(nombreCompleto(o)));
+          unidades.push(pareja);
+        } else {
+          vistos.add(nombre);
+          unidades.push([v]);
         }
       });
-      asignaciones[dia] = [...new Set(asignaciones[dia])];
+
+      unidades.sort((a, b) => {
+        const avgA = a.reduce((s, v) => s + (conteoAsignaciones[nombreCompleto(v)] || 0), 0) / a.length;
+        const avgB = b.reduce((s, v) => s + (conteoAsignaciones[nombreCompleto(v)] || 0), 0) / b.length;
+        if (avgA !== avgB) return avgA - avgB;
+        return Math.random() - 0.5;
+      });
+
+      const pendientes = [...unidades];
+      while (seleccionados.length < necesarios && pendientes.length) {
+        const cupo = necesarios - seleccionados.length;
+        const idx = pendientes.findIndex((unidad) => unidad.length <= cupo || (cupo >= 2 && unidad.length >= 2));
+        if (idx < 0) break;
+        const unidad = pendientes.splice(idx, 1)[0];
+        const tomar = unidad.length <= cupo ? unidad : unidad.slice(0, cupo);
+        tomar.forEach((v) => agregarVoluntario(v));
+      }
+
+      asignaciones[dia] = [...new Set(seleccionados)].sort(compararPorApellido);
     });
 
     return { asignaciones, conteoAsignaciones };
@@ -2437,25 +2745,45 @@
     if (!tieneAccesoAdmin()) return;
     const select = document.getElementById('semanaSelect');
     if (!select.value) { alert('Selecciona una semana'); return; }
-    const semana = semanasDisponibles.find(s => s.id === select.value);
+    const semana = semanasDisponibles.find(s => s.id === select.value)
+      || (() => {
+        const existenteSel = encontrarPlanilla(select.value);
+        if (!existenteSel) return null;
+        const inicio = parseFechaLocal(existenteSel.fechaInicio);
+        const fin = parseFechaLocal(existenteSel.fechaFin);
+        if (!inicio || !fin) return null;
+        return {
+          id: clavePeriodoPlanilla(existenteSel) || existenteSel.periodo,
+          fechaInicio: inicio,
+          fechaFin: fin,
+          etiqueta: existenteSel.etiqueta || etiquetaSemana(inicio, fin)
+        };
+      })();
     if (!semana) return;
 
-    const existente = planillasGuardadas.find(p => p.periodo === semana.id);
+    const existente = encontrarPlanilla(semana.id);
     if (existente && !confirm('Ya existe una planilla para esta semana. ¿Sobrescribir?')) return;
 
     const { asignaciones } = generarAsignaciones(semana.id, semana.fechaInicio, semana.fechaFin);
+    const etiqueta = semana.etiqueta || etiquetaSemana(semana.fechaInicio, semana.fechaFin);
     const nuevaPlanilla = {
       id: existente && typeof existente.id === 'string' ? existente.id : crypto.randomUUID(),
       periodo: semana.id,
-      etiqueta: semana.etiqueta,
-      fechaInicio: semana.fechaInicio.toISOString(),
-      fechaFin: semana.fechaFin.toISOString(),
+      etiqueta,
+      fechaInicio: new Date(semana.fechaInicio.getFullYear(), semana.fechaInicio.getMonth(), semana.fechaInicio.getDate()).toISOString(),
+      fechaFin: new Date(semana.fechaFin.getFullYear(), semana.fechaFin.getMonth(), semana.fechaFin.getDate()).toISOString(),
       asignaciones,
       configUsada: { ...configDias },
       creada: new Date().toISOString()
     };
 
-    planillasGuardadas = planillasGuardadas.filter(p => p.periodo !== semana.id);
+    const etiquetaClave = claveVisualSemana(etiqueta, semana.fechaInicio);
+    planillasGuardadas = planillasGuardadas.filter((p) => {
+      if (existente && p.id && p.id === existente.id) return false;
+      if (p.periodo === semana.id || clavePeriodoPlanilla(p) === semana.id) return false;
+      if (etiquetaClave && claveVisualSemana(p.etiqueta, p.fechaInicio) === etiquetaClave) return false;
+      return true;
+    });
     planillasGuardadas.push(nuevaPlanilla);
     await guardarPlanillas();
 
@@ -2487,12 +2815,18 @@
     let html = `
       <div class="planilla-header">
         <span class="periodo-badge">📆 ${escapeHtml(etiqueta)}</span>
-        <span class="badge-config">${admin ? 'Voluntarios requeridos' : 'Programa'}: ${DIAS.map(d => `${DIAS_ABREV[d]}:${planilla.configUsada?.[d] || 0}`).join(' · ')}</span>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <span class="badge-config">${admin ? 'Voluntarios requeridos' : 'Programa'}: ${DIAS.map(d => `${DIAS_ABREV[d]}:${planilla.configUsada?.[d] || 0}`).join(' · ')}</span>
+          ${admin ? `<button type="button" class="btn btn-danger btn-sm" data-eliminar-planilla="${escapeHtml(planilla.periodo)}">Eliminar fecha</button>` : ''}
+        </div>
       </div>
       <div class="planilla-dias">
     `;
     DIAS.forEach((dia) => {
       const voluntariosDia = asignaciones?.[dia] || [];
+      const voluntariosDiaOrdenados = voluntariosDia
+        .map((nombre, idx) => ({ nombre, idx }))
+        .sort((a, b) => compararPorApellido(a.nombre, b.nombre));
       const capitanesNombres = voluntarios.filter((v) => v.esCapitan && v.diasCapitan?.includes(dia)).map((v) => nombreCompleto(v));
       const diaMio = voluntariosDia.some((nombre) => esNombreDelDispositivo(nombre));
       const extras = opcionesAgregarDia(dia, voluntariosDia);
@@ -2503,7 +2837,7 @@
             <span style="font-size:0.8rem; font-weight:500; background:white; padding:2px 10px; border-radius:30px;">${voluntariosDia.length}/${planilla.configUsada?.[dia] || 0}</span>
           </div>
           <div class="dia-body">
-            ${voluntariosDia.length ? voluntariosDia.map((nombre, idx) => {
+            ${voluntariosDiaOrdenados.length ? voluntariosDiaOrdenados.map(({ nombre, idx }) => {
               const esCap = capitanesNombres.some((n) => nombresCoinciden(n, nombre));
               const esMio = esNombreDelDispositivo(nombre);
               return `<div class="voluntario-item${esMio ? ' soy-yo' : ''}">
@@ -2518,14 +2852,14 @@
     });
     html += `</div>`;
     if (admin) {
-      html += '<p class="text-muted mt-4">Puedes quitar o agregar personas. Los cambios se guardan al momento.</p>';
+      html += '<p class="text-muted mt-4">Puedes quitar o agregar personas, o eliminar esta fecha. Los cambios se guardan al momento.</p>';
     }
     container.innerHTML = html;
   }
 
   async function actualizarAsignacionDia(periodo, dia, nombres) {
     if (!tieneAccesoAdmin()) return;
-    const planilla = planillasGuardadas.find((p) => p.periodo === periodo);
+    const planilla = encontrarPlanilla(periodo);
     if (!planilla) return;
     planilla.asignaciones = { ...(planilla.asignaciones || {}), [dia]: nombres };
     await guardarPlanillas();
@@ -2534,13 +2868,48 @@
     renderProximosTurnos();
   }
 
+  function coincidePlanilla(p, periodo) {
+    if (!p || !periodo) return false;
+    const clave = String(periodo);
+    return p.periodo === clave || clavePeriodoPlanilla(p) === clave || (p.id && p.id === clave);
+  }
+
+  async function confirmarYEliminarPlanilla(periodo) {
+    if (!tieneAccesoAdmin()) return;
+    const planilla = encontrarPlanilla(periodo);
+    if (!planilla) {
+      alert('No hay una planilla guardada para esa fecha.');
+      return;
+    }
+    const etiqueta = planilla.etiqueta || 'esta semana';
+    if (!confirm(`¿Eliminar la planilla del ${etiqueta}? Se borrará para todos y no se puede deshacer.`)) return;
+    const etiquetaClave = claveVisualSemana(planilla.etiqueta, planilla.fechaInicio);
+    const clave = clavePeriodoPlanilla(planilla);
+    planillasGuardadas = planillasGuardadas.filter((p) => {
+      if (coincidePlanilla(p, periodo) || coincidePlanilla(p, clave) || coincidePlanilla(p, planilla.periodo)) return false;
+      if (planilla.id && p.id === planilla.id) return false;
+      if (etiquetaClave && claveVisualSemana(p.etiqueta, p.fechaInicio) === etiquetaClave) return false;
+      return true;
+    });
+    await guardarPlanillas();
+    renderHistorial();
+    renderProximosTurnos();
+    renderSemanaSelect();
+  }
+
   document.getElementById('planillaContent')?.addEventListener('click', async (event) => {
+    const eliminarBtn = event.target.closest('[data-eliminar-planilla]');
+    if (eliminarBtn) {
+      event.preventDefault();
+      await confirmarYEliminarPlanilla(eliminarBtn.dataset.eliminarPlanilla);
+      return;
+    }
     const btn = event.target.closest('[data-quitar-asig], .btn-quitar-asig');
     if (!btn || !tieneAccesoAdmin()) return;
     const periodo = btn.dataset.periodo;
     const dia = btn.dataset.dia;
     const idx = Number(btn.dataset.idx);
-    const planilla = planillasGuardadas.find((p) => p.periodo === periodo);
+    const planilla = encontrarPlanilla(periodo);
     if (!planilla || !dia) return;
     const lista = [...(planilla.asignaciones?.[dia] || [])];
     if (Number.isNaN(idx) || idx < 0 || idx >= lista.length) return;
@@ -2555,7 +2924,7 @@
     if (!nombre) return;
     const periodo = select.dataset.addPeriodo;
     const dia = select.dataset.addDia;
-    const planilla = planillasGuardadas.find((p) => p.periodo === periodo);
+    const planilla = encontrarPlanilla(periodo);
     if (!planilla || !dia) return;
     const lista = [...(planilla.asignaciones?.[dia] || [])];
     if (lista.some((n) => nombresCoinciden(n, nombre))) return;
@@ -2564,6 +2933,10 @@
   });
 
   document.getElementById('semanaSelect')?.addEventListener('change', mostrarPlanillaSeleccionada);
+  document.getElementById('eliminarPlanillaBtn')?.addEventListener('click', async () => {
+    const select = document.getElementById('semanaSelect');
+    await confirmarYEliminarPlanilla(select?.value || '');
+  });
 
   document.getElementById('exportarJpgBtn')?.addEventListener('click', () => {
     const planillaDiv = document.getElementById('planillaContent');
@@ -2592,32 +2965,49 @@
   // ============================================================
   function renderHistorial() {
     const container = document.getElementById('historialList');
-    if (!planillasGuardadas.length) {
+    const planillas = deduplicarPlanillas(planillasGuardadas);
+    if (!planillas.length) {
       container.innerHTML = '<div class="empty-state">No hay planillas guardadas.</div>';
       return;
     }
-    // Ordenar por fecha de creación descendente
-    const ordenadas = [...planillasGuardadas].sort((a,b) => new Date(b.creada) - new Date(a.creada));
+    const admin = tieneAccesoAdmin();
+    const ordenadas = [...planillas].sort((a,b) => new Date(b.creada) - new Date(a.creada));
     container.innerHTML = ordenadas.map(p => `
       <div class="historial-item">
         <div>
-          <span class="historial-fecha">${p.etiqueta}</span>
-          <span class="text-muted" style="margin-left:12px; font-size:0.8rem;">Creada: ${new Date(p.creada).toLocaleDateString()}</span>
+          <span class="historial-fecha">${escapeHtml(p.etiqueta)}</span>
+          <span class="text-muted" style="margin-left:12px; font-size:0.8rem;">Creada: ${escapeHtml(new Date(p.creada).toLocaleDateString())}</span>
         </div>
         <div class="historial-acciones">
-          <button class="btn btn-outline btn-sm" onclick="verPlanillaHistorial('${p.periodo}')">Ver</button>
+          <button type="button" class="btn btn-outline btn-sm" data-ver-planilla="${escapeHtml(p.periodo)}">Ver</button>
+          ${admin ? `<button type="button" class="btn btn-danger btn-sm" data-eliminar-planilla="${escapeHtml(p.periodo)}">Eliminar</button>` : ''}
         </div>
       </div>
     `).join('');
   }
 
   window.verPlanillaHistorial = function(periodoId) {
-    const planilla = planillasGuardadas.find(p => p.periodo === periodoId);
+    const planilla = encontrarPlanilla(periodoId);
     if (!planilla) return;
     activarPestana('planilla');
     asegurarOpcionSemana(planilla);
     renderPlanilla(planilla);
+    actualizarBotonEliminarSemana(planilla);
   };
+
+  document.getElementById('historialList')?.addEventListener('click', async (event) => {
+    const eliminarBtn = event.target.closest('[data-eliminar-planilla]');
+    if (eliminarBtn) {
+      event.preventDefault();
+      await confirmarYEliminarPlanilla(eliminarBtn.dataset.eliminarPlanilla);
+      return;
+    }
+    const verBtn = event.target.closest('[data-ver-planilla]');
+    if (verBtn) {
+      event.preventDefault();
+      window.verPlanillaHistorial(verBtn.dataset.verPlanilla);
+    }
+  });
 
   // ============================================================
   //  NUEVA SEMANA (RÁPIDA)

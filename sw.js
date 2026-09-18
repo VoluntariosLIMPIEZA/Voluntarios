@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'voluntarios-v1.4.2';
+const CACHE_VERSION = 'voluntarios-v1.4.4';
 const PRECACHE = `${CACHE_VERSION}-app`;
 const RUNTIME = `${CACHE_VERSION}-runtime`;
 
