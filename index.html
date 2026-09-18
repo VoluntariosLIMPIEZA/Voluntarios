@@ -18,7 +18,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
   <script src="vendor/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/supabase-config.js"></script>
@@ -784,6 +784,112 @@
       font-size: 0.85rem;
       margin: -4px 0 12px;
     }
+    #jpgExportHost {
+      position: fixed;
+      left: -200vw;
+      top: 0;
+      width: 1080px;
+      pointer-events: none;
+    }
+    .jpg-poster {
+      width: 1080px;
+      height: 1080px;
+      background: #f4f7fb;
+      color: #1b365d;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      padding: 58px 54px 50px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+    .jpg-poster-title {
+      margin: 0;
+      text-align: center;
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      line-height: 1.15;
+      color: #1b365d;
+      text-transform: uppercase;
+    }
+    .jpg-poster-fecha {
+      margin: 14px 0 0;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 600;
+      color: #5b6f86;
+      letter-spacing: 0.01em;
+    }
+    .jpg-days {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 28px;
+      margin-top: 38px;
+    }
+    .jpg-row {
+      display: flex;
+      justify-content: center;
+      gap: 22px;
+      flex: 1;
+      min-height: 0;
+    }
+    .jpg-day {
+      width: 310px;
+      flex: 0 0 310px;
+      background: #ffffff;
+      border-radius: 18px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 24px rgba(27, 54, 93, 0.08);
+      border: 1px solid #e7eef6;
+    }
+    .jpg-day-header {
+      background: #1b365d;
+      color: #ffffff;
+      text-align: center;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      font-size: 18px;
+      padding: 16px 12px 14px;
+      text-transform: uppercase;
+      border-bottom: 4px solid #7eb6ff;
+    }
+    .jpg-day-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      padding: 6px 0 8px;
+    }
+    .jpg-name {
+      text-align: center;
+      color: #6b7c90;
+      font-size: 18px;
+      font-weight: 500;
+      line-height: 1.25;
+      padding: 11px 16px;
+      border-bottom: 1px solid #eef2f7;
+    }
+    .jpg-name:nth-child(even) {
+      background: #f7f9fc;
+    }
+    .jpg-name:last-child {
+      border-bottom: none;
+    }
+    .jpg-name.is-capitan {
+      font-weight: 800;
+      color: #1b365d;
+    }
+    .jpg-name.is-empty {
+      color: #94a3b8;
+      font-style: italic;
+      font-weight: 500;
+      background: transparent;
+    }
     .turno-aviso {
       border-left: none;
       background: var(--surface-muted);
@@ -1372,6 +1478,8 @@
     </div>
   </div>
 </div>
+
+<div id="jpgExportHost" aria-hidden="true"></div>
 
 <script>
   // ============================================================
@@ -3264,26 +3372,147 @@
     await confirmarYEliminarPlanilla(select?.value || '');
   });
 
+  function esCapitanDelDia(nombre, dia) {
+    return voluntarios.some((v) =>
+      v.esCapitan &&
+      v.diasCapitan?.includes(dia) &&
+      nombresCoinciden(nombreCompleto(v), nombre)
+    );
+  }
+
+  function nombresOrdenadosParaJpg(nombres, dia) {
+    return [...(nombres || [])].sort((a, b) => {
+      const aCap = esCapitanDelDia(a, dia);
+      const bCap = esCapitanDelDia(b, dia);
+      if (aCap !== bCap) return aCap ? -1 : 1;
+      return compararPorApellido(a, b);
+    });
+  }
+
+  function textoFechaPrograma(planilla) {
+    const inicio = parseFechaLocal(planilla?.fechaInicio);
+    const fin = parseFechaLocal(planilla?.fechaFin);
+    if (!inicio || !fin) {
+      return planilla?.etiqueta || etiquetaSemana(planilla?.fechaInicio, planilla?.fechaFin) || '';
+    }
+    const mismoMes = inicio.getMonth() === fin.getMonth() && inicio.getFullYear() === fin.getFullYear();
+    const mismoAnio = inicio.getFullYear() === fin.getFullYear();
+    const mesAnio = (fecha) => fecha.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    if (mismoMes) return `${inicio.getDate()} al ${fin.getDate()} de ${mesAnio(inicio)}`;
+    if (mismoAnio) {
+      const mesInicio = inicio.toLocaleDateString('es-ES', { month: 'long' });
+      return `${inicio.getDate()} de ${mesInicio} al ${fin.getDate()} de ${mesAnio(fin)}`;
+    }
+    const completa = (fecha) => fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+    return `${completa(inicio)} al ${completa(fin)}`;
+  }
+
+  function htmlTarjetaDiaJpg(planilla, dia, fontSize) {
+    const nombres = nombresOrdenadosParaJpg(planilla.asignaciones?.[dia] || [], dia);
+    const cuerpo = nombres.length
+      ? nombres.map((nombre) => {
+          const capitan = esCapitanDelDia(nombre, dia);
+          return `<div class="jpg-name${capitan ? ' is-capitan' : ''}" style="font-size:${fontSize}px;">${escapeHtml(nombre)}</div>`;
+        }).join('')
+      : '<div class="jpg-name is-empty">Sin asignar</div>';
+    return `<article class="jpg-day"><div class="jpg-day-header">${escapeHtml(dia)}</div><div class="jpg-day-body">${cuerpo}</div></article>`;
+  }
+
+  function htmlPosterPlanillaJpg(planilla) {
+    const fecha = textoFechaPrograma(planilla);
+    const maxNombres = Math.max(4, ...DIAS.map((dia) => (planilla.asignaciones?.[dia] || []).length));
+    const fontSize = maxNombres > 7 ? 16 : maxNombres > 5 ? 18 : 20;
+    const tarjetas = DIAS.map((dia) => htmlTarjetaDiaJpg(planilla, dia, fontSize));
+    return `
+      <div class="jpg-poster">
+        <h1 class="jpg-poster-title">Programa semanal de limpieza</h1>
+        ${fecha ? `<p class="jpg-poster-fecha">${escapeHtml(fecha)}</p>` : ''}
+        <div class="jpg-days">
+          <div class="jpg-row">${tarjetas.slice(0, 3).join('')}</div>
+          <div class="jpg-row">${tarjetas.slice(3).join('')}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function canvasCuadrado(origen, fondo) {
+    const lado = Math.max(origen.width, origen.height);
+    const salida = document.createElement('canvas');
+    salida.width = lado;
+    salida.height = lado;
+    const ctx = salida.getContext('2d');
+    ctx.fillStyle = fondo;
+    ctx.fillRect(0, 0, lado, lado);
+    ctx.drawImage(origen, Math.round((lado - origen.width) / 2), Math.round((lado - origen.height) / 2));
+    return salida;
+  }
+
+  function descargarCanvasJpg(canvas, nombre) {
+    const link = document.createElement('a');
+    link.download = nombre;
+    link.href = canvas.toDataURL('image/jpeg', 0.95);
+    link.click();
+  }
+
+  async function exportarPlanillaJpg(planilla) {
+    if (typeof html2canvas !== 'function') {
+      alert('No se pudo cargar el exportador de imagen. Recarga la página e inténtalo de nuevo.');
+      return;
+    }
+    const host = document.getElementById('jpgExportHost');
+    if (!host) return;
+    host.innerHTML = htmlPosterPlanillaJpg(planilla);
+    const poster = host.querySelector('.jpg-poster');
+    const btn = document.getElementById('exportarJpgBtn');
+    const textoBtn = btn?.textContent;
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Generando JPG...';
+    }
+    try {
+      if (document.fonts?.ready) await document.fonts.ready;
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const canvas = await html2canvas(poster, {
+        scale: 2,
+        backgroundColor: '#f4f7fb',
+        width: 1080,
+        height: 1080,
+        windowWidth: 1080,
+        windowHeight: 1080,
+        logging: false,
+        allowTaint: false,
+        useCORS: true,
+        onclone: (clonedDoc) => {
+          const cloneHost = clonedDoc.getElementById('jpgExportHost');
+          if (cloneHost) {
+            cloneHost.style.left = '0';
+            cloneHost.style.top = '0';
+            cloneHost.style.opacity = '1';
+          }
+        }
+      });
+      const cuadrado = canvasCuadrado(canvas, '#f4f7fb');
+      const fechaArchivo = formatearFechaLocalISO(planilla.fechaInicio) || new Date().toISOString().slice(0, 10);
+      descargarCanvasJpg(cuadrado, `programa_limpieza_${fechaArchivo}.jpg`);
+    } catch (err) {
+      alert('Error al exportar: ' + err.message);
+    } finally {
+      host.innerHTML = '';
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = textoBtn || 'Exportar JPG';
+      }
+    }
+  }
+
   document.getElementById('exportarJpgBtn')?.addEventListener('click', () => {
-    const planillaDiv = document.getElementById('planillaContent');
-    if (!planillaDiv || planillaDiv.querySelector('.empty-state')) {
+    const select = document.getElementById('semanaSelect');
+    const planilla = encontrarPlanilla(select?.value);
+    if (!planilla) {
       alert('Primero genera una planilla para exportar.');
       return;
     }
-    html2canvas(planillaDiv, {
-      scale: 2,
-      backgroundColor: '#ffffff',
-      logging: false,
-      allowTaint: false,
-      useCORS: true
-    }).then(canvas => {
-      const link = document.createElement('a');
-      link.download = `planilla_limpieza_${new Date().toISOString().slice(0,10)}.jpg`;
-      link.href = canvas.toDataURL('image/jpeg', 0.95);
-      link.click();
-    }).catch(err => {
-      alert('Error al exportar: ' + err.message);
-    });
+    exportarPlanillaJpg(planilla);
   });
 
   // ============================================================
